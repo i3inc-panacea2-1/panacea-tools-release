@@ -1,0 +1,12 @@
+﻿<Window x:Class="Panacea.Tools.Release.SelectVersion"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SelectVersion" Height="auto" Width="300"
+        SizeToContent="Height"
+        WindowStyle="ToolWindow"
+        WindowStartupLocation="CenterScreen"
+        Name="Main">
+    <Grid>
+        <ComboBox Margin="20" SelectedIndex="0" VerticalAlignment="Center" ItemsSource="{Binding ElementName=Main, Path=Versions}" DisplayMemberPath="Name" SelectedItem="{Binding ElementName=Main, Path=Version}"></ComboBox>
+    </Grid>
+</Window>

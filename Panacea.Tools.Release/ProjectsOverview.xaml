@@ -1,0 +1,472 @@
+﻿<Window x:Class="Panacea.Tools.Release.ProjectsOverview"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="ProjectsOverview" Height="768" Width="1366"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
+        Name="Main">
+    <Window.Resources>
+    
+
+        <Style TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+        </Grid.RowDefinitions>
+        <TabControl>
+            <TabItem Header="Overview">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="30"
+                           Text="{Binding ElementName=Main,Path=TicketCount, StringFormat='Total Tickets {0}'}" />
+                    <TextBlock Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="30"
+                           Text="{Binding ElementName=Main,Path=ProjectsToBeUpdated, StringFormat='To be updated {0}'}" />
+                </Grid>
+            </TabItem>
+            <TabItem Header="Core" DataContext="{Binding ElementName=Main,Path=ProjectHelper.CoreProjectInfo}">
+                <Grid Grid.Column="1" Background="SeaShell">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition />
+                        <RowDefinition Height="auto" />
+                        <RowDefinition Height="auto" />
+                    </Grid.RowDefinitions>
+                    <GroupBox Header="Changes">
+                        <WrapPanel>
+
+
+                            <TextBlock TextAlignment="Center" VerticalAlignment="Center" Margin="5"
+                                   Text="{Binding CurrentVersion, StringFormat='Current Version: {0}'}"
+                                   IsEnabled="False" />
+
+
+                            <TextBlock VerticalAlignment="Center" Margin="5" TextAlignment="Center"
+                                   Text="{Binding RemoteVersion, StringFormat='Remote Version: {0}'}" IsEnabled="False" />
+
+                            <CheckBox VerticalAlignment="Center" Margin="5" HorizontalAlignment="Center"
+                                  Content="Different Hash" IsChecked="{Binding HasDifferentProjectHash, Mode=OneWay}"
+                                  IsEnabled="False" />
+
+                            <CheckBox VerticalAlignment="Center" Margin="5" HorizontalAlignment="Center"
+                                  Content="Compatibility Changed"
+                                  IsChecked="{Binding CompatibilityChanged, Mode=OneWay}" IsEnabled="False" />
+
+
+                            <CheckBox VerticalAlignment="Center" Margin="5" HorizontalAlignment="Center"
+                                  Content="Manifest Changed" IsChecked="{Binding ManifestChanged, Mode=OneWay}"
+                                  IsEnabled="False" />
+
+                            <TextBlock VerticalAlignment="Center" Margin="5" TextAlignment="Center"
+                                   Text="{Binding Bugs, Mode=OneWay, StringFormat='Bugs: {0}'}" IsEnabled="False" />
+
+                            <TextBlock VerticalAlignment="Center" Margin="5" TextAlignment="Center"
+                                   Text="{Binding Features, Mode=OneWay, StringFormat='Features: {0}'}"
+                                   IsEnabled="False" />
+
+                            <Grid VerticalAlignment="Center" Margin="5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock VerticalAlignment="Center" Margin="5"
+                                       Text="{Binding SuggestedVersion, StringFormat='Features: {0}'}"
+                                       IsEnabled="False" />
+                                <Button VerticalAlignment="Center" Margin="5" Grid.Column="1" Content=" + "
+                                    Click="Button_Click_2" />
+                                <Button VerticalAlignment="Center" Margin="5" Grid.Column="2" Content=" - "
+                                    Click="Button_Click_3" />
+
+                            </Grid>
+
+                            <CheckBox VerticalAlignment="Center" Margin="5" HorizontalAlignment="Center"
+                                  Content="Requires Update" IsChecked="{Binding RequiresUpdate, Mode=OneWay}"
+                                  IsEnabled="False" />
+
+                            <CheckBox VerticalAlignment="Center" Margin="5" HorizontalAlignment="Center"
+                                  Content="Update (?)" IsChecked="{Binding Update}" />
+
+                        </WrapPanel>
+                    </GroupBox>
+                    <GroupBox Header="Bugs" Grid.Row="1">
+                        <ItemsControl ItemsSource="{Binding BugsInfo, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+
+                                        <Expander Header="{Binding Subject}">
+                                            <StackPanel Background="White">
+                                                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" />
+                                                <TextBlock>
+                                                    <TextBlock.Inlines>
+                                                        <Hyperlink>
+                                                            <TextBlock Text="Visit" />
+                                                        </Hyperlink>
+                                                    </TextBlock.Inlines>
+                                            </TextBlock>
+                                            </StackPanel>
+                                        </Expander>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </GroupBox>
+                    <GroupBox Header="Features" Grid.Row="2">
+                        <ItemsControl ItemsSource="{Binding FeaturesInfo, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+
+                                        <Expander Header="{Binding Subject}">
+                                            <StackPanel Background="White">
+                                                <TextBlock TextWrapping="Wrap" Text="{Binding Description}" />
+                                                <TextBlock>
+                                                    <TextBlock.Inlines>
+                                                        <Hyperlink>
+                                                            <TextBlock Text="Visit" />
+                                                        </Hyperlink>
+                                                    </TextBlock.Inlines>
+                                            </TextBlock>
+                                            </StackPanel>
+                                        </Expander>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </GroupBox>
+
+                    <GroupBox Header="Refactoring" Grid.Row="3">
+                        <ItemsControl ItemsSource="{Binding RefactoringInfo, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+
+                                        <Expander Header="{Binding Subject}">
+                                            <StackPanel Background="White">
+                                                <TextBlock TextWrapping="Wrap" Text="{Binding Description}" />
+                                                <TextBlock>
+                                                    <TextBlock.Inlines>
+                                                        <Hyperlink>
+                                                            <TextBlock Text="Visit" />
+                                                        </Hyperlink>
+                                                    </TextBlock.Inlines>
+                                            </TextBlock>
+                                            </StackPanel>
+                                        </Expander>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </GroupBox>
+                    <GroupBox Header="Signatures" Grid.Row="4">
+                        <ListBox ScrollViewer.CanContentScroll="True" Background="White"
+                             ItemsSource="{Binding CurrentSignatures, Mode=OneWay}" />
+                    </GroupBox>
+
+                    <GroupBox Header="Target Version" Grid.Row="5">
+                        <TextBlock Background="White" Text="{Binding SuggestedVersion, Mode=OneWay}" />
+                    </GroupBox>
+
+                </Grid>
+            </TabItem>
+            <TabItem Header="Plugins">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+
+                        <RowDefinition />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Update all that require it" Margin="1" Click="Button_Click" />
+
+                        <Button Content="Update none" Margin="1" Click="Button_Click_1" />
+                    </StackPanel>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="3*" />
+                            <ColumnDefinition Width="2*" />
+                        </Grid.ColumnDefinitions>
+                        <ListView ItemsSource="{Binding ElementName=Main, Path=ProjectHelper.PluginsProjectInfo}" Name="List" Grid.Row="1"
+                              SelectedIndex="0">
+                            <ListView.Resources>
+                                <Style TargetType="ListViewItem" BasedOn="{x:Null}">
+                                    <Style.Setters>
+
+                                        <Setter Property="Background" Value="{Binding Background, Mode=OneWay}" />
+                                        <Setter Property="Margin" Value="0" />
+                                    </Style.Setters>
+                                </Style>
+                            </ListView.Resources>
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Width="auto" Header="Name" DisplayMemberBinding="{Binding Name}" />
+                                    <GridViewColumn Width="auto" Header="Local"
+                                                DisplayMemberBinding="{Binding CurrentVersion}">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock TextAlignment="Center" Text="{Binding CurrentVersion}"
+                                                       IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="Remote">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock TextAlignment="Center" Text="{Binding RemoteVersion}"
+                                                       IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="Project Hash">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox HorizontalAlignment="Center"
+                                                      IsChecked="{Binding HasDifferentProjectHash, Mode=OneWay}"
+                                                      IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+                                    <GridViewColumn Width="auto" Header="Signatures">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox HorizontalAlignment="Center"
+                                                      IsChecked="{Binding SignaturesChanged, Mode=OneWay}"
+                                                      IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="Compatibility">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox HorizontalAlignment="Center"
+                                                      IsChecked="{Binding CompatibilityChanged, Mode=OneWay}"
+                                                      IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="Manifest">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox HorizontalAlignment="Center"
+                                                      IsChecked="{Binding ManifestChanged, Mode=OneWay}"
+                                                      IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="Bugs">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock TextAlignment="Center" Text="{Binding Bugs, Mode=OneWay}"
+                                                       IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="Features">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock TextAlignment="Center" Text="{Binding Features, Mode=OneWay}"
+                                                       IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="Refactors">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <TextBlock TextAlignment="Center" Text="{Binding Refactors, Mode=OneWay}"
+                                                       IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="New Version">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition />
+                                                        <ColumnDefinition Width="auto" />
+                                                        <ColumnDefinition Width="auto" />
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock Text="{Binding SuggestedVersion}" IsEnabled="False"
+                                                           VerticalAlignment="Center" Margin="5" />
+                                                    <Button Grid.Column="1" Margin="2" Content=" + " Click="Button_Click_4"
+                                                        Tag="{Binding}" />
+                                                    <Button Grid.Column="2" Margin="2" Content=" - " Click="Button_Click_5"
+                                                        Tag="{Binding}" />
+
+                                                </Grid>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="Requires Update">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox HorizontalAlignment="Center"
+                                                      IsChecked="{Binding RequiresUpdate, Mode=OneWay}"
+                                                      IsEnabled="False" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                    <GridViewColumn Width="auto" Header="Update?">
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <CheckBox HorizontalAlignment="Center" IsChecked="{Binding Update}"
+                                                      IsEnabled="{Binding RequiresUpdate, Mode=OneWay}" />
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+                        </ListView>
+
+                        <Grid Grid.Column="1" Background="SeaShell">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition Height="auto" />
+                                <RowDefinition />
+                                <RowDefinition Height="auto" />
+                            </Grid.RowDefinitions>
+                            <GroupBox Header="Bugs" Grid.Row="0">
+                                <ItemsControl
+                                ItemsSource="{Binding ElementName=List, Path=SelectedItem.BugsInfo, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
+
+                                                <Expander Header="{Binding Subject}">
+                                                    <StackPanel Background="White">
+                                                        <TextBlock TextWrapping="Wrap" Text="{Binding Description}" />
+                                                        <TextBlock>
+                                                            <TextBlock.Inlines>
+                                                                <Hyperlink Click="Hyperlink_Click" Tag="{Binding Id}">
+                                                                    <TextBlock Text="Visit" />
+                                                                </Hyperlink>
+                                                            </TextBlock.Inlines>
+                                                    </TextBlock>
+                                                    </StackPanel>
+                                                </Expander>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+
+                            </GroupBox>
+                            <GroupBox Header="Features" Grid.Row="1">
+                                <ItemsControl
+                                ItemsSource="{Binding ElementName=List, Path=SelectedItem.FeaturesInfo, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
+
+                                                <Expander Header="{Binding Subject}">
+                                                    <StackPanel Background="White">
+                                                        <TextBlock TextWrapping="Wrap" Text="{Binding Description}" />
+                                                        <TextBlock>
+                                                            <TextBlock.Inlines>
+                                                                <Hyperlink Click="Hyperlink_Click" Tag="{Binding Id}">
+                                                                    <TextBlock Text="Visit" />
+                                                                </Hyperlink>
+                                                            </TextBlock.Inlines>
+                                                    </TextBlock>
+                                                    </StackPanel>
+                                                </Expander>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </GroupBox>
+
+                            <GroupBox Header="Refactoring" Grid.Row="2">
+                                <ItemsControl
+                                ItemsSource="{Binding ElementName=List, Path=SelectedItem.Refactors, Mode=OneWay}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
+
+                                                <Expander Header="{Binding Subject}">
+                                                    <StackPanel Background="White">
+                                                        <TextBlock TextWrapping="Wrap" Text="{Binding Description}" />
+                                                        <TextBlock>
+                                                            <TextBlock.Inlines>
+                                                                <Hyperlink Click="Hyperlink_Click" Tag="{Binding Id}">
+                                                                    <TextBlock Text="Visit" />
+                                                                </Hyperlink>
+                                                            </TextBlock.Inlines>
+                                                    </TextBlock>
+                                                    </StackPanel>
+                                                </Expander>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </GroupBox>
+                            <GroupBox Header="Signatures" Grid.Row="3">
+                                <ListBox ScrollViewer.CanContentScroll="True" Background="White"
+                                     ItemsSource="{Binding ElementName=List, Path=SelectedItem.CurrentSignatures, Mode=OneWay}" />
+                            </GroupBox>
+
+                            <GroupBox Header="Target Version" Grid.Row="4">
+                                <TextBlock Background="White"
+                                       Text="{Binding ElementName=List, Path=SelectedItem.SuggestedVersion, Mode=OneWay}" />
+                            </GroupBox>
+
+                        </Grid>
+
+                    </Grid>
+
+                </Grid>
+            </TabItem>
+        </TabControl>
+        <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Right">
+            <Button Content="Report!" Margin="10" Name="ButtonReport" Click="ButtonReport_Click" />
+            <Button Content="Publish!" Margin="10" Name="ButtonPublish" Click="ButtonPublish_Click" />
+        </StackPanel>
+    </Grid>
+    
+
+</Window>
