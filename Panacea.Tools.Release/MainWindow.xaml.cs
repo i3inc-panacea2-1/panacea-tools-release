@@ -110,7 +110,7 @@ namespace Panacea.Tools.Release
             }
             catch (Exception ex)
             {
-                Utils.Panic(ex.Message);
+                Utils.Panic(ex.Message + Environment.NewLine + ex.StackTrace);
             }
 
 

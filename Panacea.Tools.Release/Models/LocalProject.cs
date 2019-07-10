@@ -5,11 +5,13 @@ using ServiceStack.Text;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Panacea.Tools.Release.Models
@@ -25,7 +27,7 @@ namespace Panacea.Tools.Release.Models
 
         public Task InitializeAsync()
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
                 _repo = new Repository(new DirectoryInfo(BasePath).Parent.Parent.FullName.ToString(), new RepositoryOptions());
 
@@ -40,8 +42,65 @@ namespace Panacea.Tools.Release.Models
                         })
                 };
                 if (_repo.RetrieveStatus().IsDirty) throw new Exception("Dirty repo: " + FullName);
+
+
+                var file = Path.Combine(BasePath, "Properties\\AssemblyInfo.cs");
+                if (File.Exists(file))
+                {
+                    var lines = File.ReadLines(file, Encoding.UTF8).ToList();
+                    using (var sw = new StreamReader(file))
+                    {
+                        string version = "0.0.0.0";
+                        var assV = new Regex(@"\[assembly: AssemblyVersion\(\""([^\""]*)\""\)\]");
+                        var assFV = new Regex(@"\[assembly: AssemblyFileVersion\(\""([^\""]*)\""\)\]");
+                        var assIV = new Regex(@"\[assembly: AssemblyInformationalVersion\(\""([^\""]*)\""\)\]");
+                        foreach (var line in lines)
+                        {
+
+                            var m = assV.Match(line);
+                            if (m.Groups.Count == 2 && version == "0.0.0.0")
+                            {
+                                version = m.Groups[1].Value;
+                            }
+
+                            m = assFV.Match(line);
+                            if (m.Groups.Count == 2 && string.IsNullOrEmpty(version))
+                            {
+                                version = m.Groups[1].Value;
+                            }
+
+                            m = assIV.Match(line);
+                            if (m.Groups.Count == 2)
+                            {
+                                version = m.Groups[1].Value;
+                            }
+                        }
+                        if (version == "0.0.0.0")
+                        {
+                            throw new Exception("Version not found: " + Name);
+                        }
+                        version = version.Replace("*", "0");
+                        Version = System.Version.Parse(version);
+                        var minimum = new System.Version(2, 50, 0, 0);
+                        if (Version < minimum)
+                        {
+                            SuggestedVersion = minimum;
+                        }
+                        else
+                        {
+                            SuggestedVersion = new System.Version(Version.Major, Version.Minor, Version.Build, Version.Revision + 1);
+                        }
+                    }
+                }
+
+                CanBeUpdated = HasDifferentHash && Version != null && (ProjectType == ProjectType.Module || Name == "Panacea");
+                await GetDependenciesAsync();
             });
         }
+
+        public bool CanBeUpdated { get; private set; }
+
+        public bool Update { get; set; }
 
         public async Task GetRemoteInfoAsync()
         {
@@ -49,7 +108,9 @@ namespace Panacea.Tools.Release.Models
             {
                 try
                 {
-                    var result = await client.DownloadStringTaskAsync(new Uri(ConfigurationManager.AppSettings["server"] + string.Format("get_module_manifest/{0}/", Name)));
+                    string name = Name;
+                    if (Name == "Panacea") name = "core";
+                    var result = await client.DownloadStringTaskAsync(new Uri(ConfigurationManager.AppSettings["server"] + string.Format("get_module_manifest/{0}/", name)));
                     RemoteProject = JsonSerializer.DeserializeFromString<RemoteProject>(result);
                 }
                 catch (WebException ex)
@@ -58,6 +119,35 @@ namespace Panacea.Tools.Release.Models
                     if (code != HttpStatusCode.NotFound) throw;
                 }
             }
+        }
+
+        public List<Dependency> Dependencies { get; private set; } = new List<Dependency>();
+
+        public Task GetDependenciesAsync()
+        {
+            return Task.Run(async () =>
+            {
+                if (!File.Exists(CsProjPath)) return;
+                var regex = new Regex(@"<PackageReference Include=\""([^\""]*)\"">[^<Version>]*<Version>([^<\/Version>]*)");
+                using (var reader = new StreamReader(CsProjPath))
+                {
+                    var text = await reader.ReadToEndAsync();
+                    var matches = regex.Matches(text);
+                    foreach (Match match in matches)
+                    {
+                        Debug.WriteLine(match.Groups[2].Value);
+                        Dependencies.Add(new Dependency(match.Groups[1].Value, System.Version.Parse(match.Groups[2].Value.Split('-').First()).Major.ToString() + ".*.*"));
+                    }
+
+                }
+            });
+        }
+
+        public System.Version Version { get; private set; }
+
+        public System.Version SuggestedVersion
+        {
+            get; set;
         }
 
         public RemoteProject RemoteProject { get; private set; }
@@ -71,9 +161,11 @@ namespace Panacea.Tools.Release.Models
         {
             get
             {
-                return RemoteProject?.CommitHash != _repo.Head.Tip.Sha;
+                return RemoteProject?.CommitHash != CommitHash;
             }
         }
+
+        public string CommitHash { get => _repo.Head.Tip.Sha; }
 
         public string CsProjPath { get; }
 
@@ -83,21 +175,27 @@ namespace Panacea.Tools.Release.Models
 
         public string Name { get => Path.GetFileName(CsProjPath).Replace(".csproj", "").Split('.').Last(); }
 
+        ProjectType _type = ProjectType.Unknown;
         public ProjectType ProjectType
         {
             get
             {
-                if (FullName == "Panacea") return ProjectType.Application;
+                if (_type != ProjectType.Unknown) return _type;
+                if (FullName == "Panacea")
+                {
+                    return _type = ProjectType.Application;
+                }
+
                 var type = FullName.Split('.')[1];
                 switch (type)
                 {
                     case "Applications":
-                        return ProjectType.Application;
+                        return _type = ProjectType.Application;
                     case "Modules":
-                        return ProjectType.Module;
+                        return _type = ProjectType.Module;
                     case "Tools":
                         return ProjectType.Tool;
-                    default: return ProjectType.Library;
+                    default: return _type = ProjectType.Library;
                 }
             }
         }
@@ -107,10 +205,6 @@ namespace Panacea.Tools.Release.Models
             return Utils.CreateMd5ForFolder(BasePath, new List<string>() { Path.Combine(BasePath, "bin"), Path.Combine(BasePath, "obj") });
         }
 
-        public string CommitHash
-        {
-            get; private set;
-        }
 
         public Task SetAssemblyVersion(string version)
         {
@@ -150,12 +244,24 @@ namespace Panacea.Tools.Release.Models
         }
     }
 
+    public class Dependency
+    {
+        public string Version { get; }
+
+        public string Name { get; }
+        public Dependency(string name, string version)
+        {
+            Name = name;
+            Version = version;
+        }
+    }
 
     public enum ProjectType
     {
         Application,
         Module,
         Tool,
-        Library
+        Library,
+        Unknown
     }
 }

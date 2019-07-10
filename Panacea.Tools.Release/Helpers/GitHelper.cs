@@ -194,7 +194,7 @@ namespace Panacea.Tools.Release.Helpers
 
                 var org = git.Organization.Get("Panacea2-1").Result;
                 var repos = git.Repository.GetAllForOrg("Panacea2-1").Result.ToList();
-                return repos;
+                return repos.Where(r=>!r.Name.StartsWith("Panacea.Modularity")).OrderBy(r=>r.Name).ToList();
             });
         }
 

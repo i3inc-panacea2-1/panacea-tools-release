@@ -52,9 +52,6 @@
     <Reference Include="Mono.Cecil">
       <HintPath>.\Mono.Cecil.dll</HintPath>
     </Reference>
-    <Reference Include="redmine-net40-api">
-      <HintPath>..\..\Lib\redmine-net40-api.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
@@ -78,6 +75,9 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Builder.cs" />
+    <Compile Include="Controls\ProjectList.xaml.cs">
+      <DependentUpon>ProjectList.xaml</DependentUpon>
+    </Compile>
     <Compile Include="FileUploader.cs" />
     <Compile Include="Helpers\GitHelper.cs" />
     <Compile Include="Helpers\RegistrySettings.cs" />
@@ -100,6 +100,10 @@
     <Compile Include="SolutionInfo.cs" />
     <Compile Include="TranslatorParser.cs" />
     <Compile Include="Utils.cs" />
+    <Page Include="Controls\ProjectList.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
