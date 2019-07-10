@@ -49,6 +49,9 @@
     <Reference Include="Ionic.Zip">
       <HintPath>.\Ionic.Zip.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Build, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Build.Engine, Version=15.1.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.Build.Framework" />
     <Reference Include="Mono.Cecil">
       <HintPath>.\Mono.Cecil.dll</HintPath>
     </Reference>
@@ -86,7 +89,6 @@
     <Compile Include="Models\Feature.cs" />
     <Compile Include="Models\GenericResponse.cs" />
     <Compile Include="Models\JsonRelease.cs" />
-    <Compile Include="ProjectHelper.cs" />
     <Compile Include="PublishWindow.xaml.cs">
       <DependentUpon>PublishWindow.xaml</DependentUpon>
     </Compile>
@@ -97,7 +99,6 @@
     <Compile Include="SelectVersion.xaml.cs">
       <DependentUpon>SelectVersion.xaml</DependentUpon>
     </Compile>
-    <Compile Include="SolutionInfo.cs" />
     <Compile Include="TranslatorParser.cs" />
     <Compile Include="Utils.cs" />
     <Page Include="Controls\ProjectList.xaml">

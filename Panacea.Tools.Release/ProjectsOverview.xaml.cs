@@ -53,17 +53,15 @@ namespace Panacea.Tools.Release
             InitializeComponent();
         }
 
-        public ProjectsOverview(ProjectHelper helper)
-            : this()
+        private async void ButtonPublish_Click(object sender, RoutedEventArgs e)
         {
-           
-        }
-
-
-
-        private void ButtonPublish_Click(object sender, RoutedEventArgs e)
-        {
-
+            var selected = Modules.Where(m => m.Update);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "exported");
+            foreach (var module in selected)
+            {
+                await module.Build();
+                await module.BuildDeltaZip(path);
+            }
             
         }
         private async void ButtonReport_Click(object sender, RoutedEventArgs e)

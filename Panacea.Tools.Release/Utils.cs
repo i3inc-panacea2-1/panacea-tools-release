@@ -113,11 +113,11 @@ namespace Panacea.Tools.Release
                 await project.GetRemoteInfoAsync();
                 await project.InitializeAsync();
             }
-
+            MessageHelper.OnMessage("Analyzing...");
             var allDependencies = _projects
                 .SelectMany(p => p.Dependencies)
                 .GroupBy(d => d.Name)
-                .Select(g => new { Name = g.Key, Versions = g.GroupBy(i => i.Version).OrderByDescending(g1=> System.Version.Parse( g1.Key.Replace("*","0"))).SelectMany(g1=>g1.Select(a=>a.Version)) });
+                .Select(g => new { Name = g.Key, Versions = g.GroupBy(i => i.Version).OrderByDescending(g1 => System.Version.Parse(g1.Key.Replace("*", "0"))).SelectMany(g1 => g1.Select(a => a.Version)) });
             var duplicates = allDependencies.Where(g => g.Versions.Count() > 1);
             if (duplicates.Any())
             {
@@ -129,18 +129,21 @@ namespace Panacea.Tools.Release
                     {
                         return new { Project = p, Problematic = p.Dependencies.Where(d => top.Any(t => t.Name == d.Name && t.Version != d.Version)) };
                     })
-                    .Where(p=>p.Problematic.Count() > 0);
-                var sb = new StringBuilder();
-                foreach (var proj in problematic)
+                    .Where(p => p.Problematic.Count() > 0);
+                if (problematic.Any())
                 {
-                    sb.Append(proj.Project.Name);
-                    foreach (var dep in proj.Problematic)
+                    var sb = new StringBuilder();
+                    foreach (var proj in problematic)
                     {
-                        sb.Append(Environment.NewLine + "  -" + dep.Name);
+                        sb.Append(proj.Project.Name);
+                        foreach (var dep in proj.Problematic)
+                        {
+                            sb.Append(Environment.NewLine + "  -" + dep.Name);
+                        }
+                        sb.Append(Environment.NewLine);
                     }
-                    sb.Append(Environment.NewLine);
+                    throw new Exception("Projects that do not match Nuget packages: " + Environment.NewLine + sb.ToString());
                 }
-                throw new Exception("Projects that do not match Nuget packages: " + Environment.NewLine + sb.ToString());
             }
         }
     }

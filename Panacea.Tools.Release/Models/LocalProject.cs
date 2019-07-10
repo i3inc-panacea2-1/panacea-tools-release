@@ -1,5 +1,7 @@
-﻿using LibGit2Sharp;
+﻿using Ionic.Zip;
+using LibGit2Sharp;
 using LibGit2Sharp.Handlers;
+using Microsoft.Build.Evaluation;
 using Panacea.Tools.Release.Helpers;
 using ServiceStack.Text;
 using System;
@@ -242,6 +244,133 @@ namespace Panacea.Tools.Release.Models
                 }
             });
         }
+
+        IEnumerable<ProjectFileInfo> Files
+        {
+            get
+            {
+                using (var md5 = MD5.Create())
+                {
+                    foreach (var f in Directory.GetFiles(Path.Combine(BasePath, "bin", "x86", "Release"))
+                    .ToList())
+                    {
+                        var ifo = new ProjectFileInfo() { Name = f };
+                        using (var stream = File.OpenRead(f))
+                        {
+                            var sb = new StringBuilder();
+                            foreach (byte b in md5.ComputeHash(stream))
+                                sb.Append(b.ToString("x2"));
+                            ifo.Md5Hash = sb.ToString();
+                        }
+                        ifo.Size = new FileInfo(f).Length;
+                        yield return ifo;
+                    }
+                }
+            }
+        }
+
+        public string ReleaseDate { get; private set; }
+
+        public string BuildBasePath
+        {
+            get
+            {
+                return Path.Combine(BasePath, "bin", "x86", "Release");
+            }
+        }
+
+        public async Task BuildDeltaZip(string path)
+        {
+            await Task.Run(() =>
+            {
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+                var zip = new ZipFile
+                {
+                    ParallelDeflateThreshold = -1
+                };
+                JsConfig.IncludeNullValues = true;
+                ReleaseDate = DateTime.Now.ToString("yyyy-MM-dd");
+                var tmp = RemoteProject.Version;
+                var tmpSignatures = RemoteProject.Dependencies;
+                var tmpFiles = RemoteProject.Files;
+                var tmpHash = RemoteProject.CommitHash;
+
+                if (RemoteProject.Files == null)
+                {
+                    foreach (var file in Files)
+                    {
+                        var filename = Path.GetFileName(file.Name);
+                        //if (filename.EndsWith(".dll.config") || filename == "manifest.json") continue;
+                        zip.AddFile(Path.Combine(BasePath, file.Name), Path.Combine("files", Path.GetDirectoryName(file.Name)));
+                    }
+
+                }
+                else
+                {
+                    Delta dleta = new Delta()
+                    {
+                        FromVersion = RemoteProject.Version,
+                        ToVersion = SuggestedVersion.ToString(),
+                        Module = Name
+                    };
+
+                    foreach (var file in Files)
+                    {
+                        var filename = Path.GetFileName(file.Name);
+                        var remoteFileName = file.Name.Substring(BuildBasePath.Length + 1, file.Name.Length - BuildBasePath.Length - 1).Replace("\\","/");
+                        var zipfilePath = Path.Combine("files", file.Name.Substring(BuildBasePath.Length + 1, Path.GetDirectoryName(file.Name).Length - BuildBasePath.Length)).Replace("\\", "/");
+                        var zipfullName = Path.Combine(zipfilePath, filename).Replace("\\", "/");
+                        //if (filename.EndsWith(".dll.config") || filename == "manifest.json") continue;
+
+                        if (!RemoteProject.Files.Any(rf => rf.Name == remoteFileName))
+                        {
+                            zip.AddFile(file.Name, zipfilePath);
+                            dleta.Added.Add(zipfullName);
+                        }
+                        else
+                        {
+                            var f = RemoteProject.Files.First(rf => rf.Name == remoteFileName);
+                            if (f.Md5Hash != file.Md5Hash || f.Size != file.Size)
+                            {
+                                zip.AddFile(file.Name, zipfilePath);
+                                dleta.Changed.Add(zipfullName);
+                            }
+                        }
+                    }
+
+                    if (RemoteProject.Files.Any(rf => !Files.Any(lf => lf.Name == rf.Name)))
+                    {
+                        RemoteProject.Files.Where(rf => !Files.Any(lf => lf.Name == rf.Name)).ToList().ForEach(nf =>
+                        {
+                            dleta.Removed.Add(Path.Combine("files", nf.Name).Replace("\\", "/"));
+                        });
+                    }
+                    File.WriteAllText(string.Format("{0}/deltas.json", path), JsonSerializer.SerializeToString<Delta>(dleta));
+                    zip.AddFile(string.Format("{0}/deltas.json", path), "/");
+                }
+
+                File.WriteAllText(string.Format("{0}/manifest.json", path), JsonSerializer.SerializeToString(this));
+
+                zip.AddFile(string.Format("{0}/manifest.json", path), "/");
+                //zip.CompressionLevel = CompressionLevel.Default;
+                zip.Save(string.Format("{0}/{1}.zip", path, Name));
+                zip.Dispose();
+
+
+                File.Delete(string.Format("{0}/deltas.json", path));
+                File.Delete(string.Format("{0}/manifest.json", path));
+
+            });
+        }
+
+        public async Task Build()
+        {
+            await Builder.Build(this);
+        }
+
     }
 
     public class Dependency

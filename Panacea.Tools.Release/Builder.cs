@@ -1,4 +1,5 @@
 ﻿using Microsoft.Build.Locator;
+using Panacea.Tools.Release.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -21,31 +22,18 @@ namespace Panacea.Tools.Release
 
         const string pathToMsBuild = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin\MsBuild.exe";
 
-        public static Task Build(SolutionInfo sinfo)
+        public static Task Build(LocalProject sinfo)
         {
             FindMsBuild();
             return Task.Run(() =>
             {
                 
-#if DEBUG
-                sinfo.ProjectNames = Directory.GetDirectories(sinfo.PluginsBuildPath).Select(s => s.Remove(0, s.LastIndexOf('\\') + 1)).ToList();
-                return true;
-#endif
-                try
-                {
-                    if (Directory.Exists(sinfo.CoreBuildPath))
-                        Directory.Delete(sinfo.CoreBuildPath, true);
-                }
-                catch
-                {
-                    throw new Exception("Could not delete bin folder. The application now will exit");
-                }
-                MessageHelper.OnMessage(String.Format("Building {0}...", Path.GetFileName(sinfo.SolutionName)));
+                MessageHelper.OnMessage(String.Format("Building {0}...", Path.GetFileName(sinfo.CsProjPath)));
 
                 var info = new ProcessStartInfo
                 {
                     Arguments =
-                        "\"" + sinfo.SolutionName + "\" /t:Rebuild /p:Configuration=Release",
+                        "\"" + sinfo.CsProjPath + "\" /t:Restore,Rebuild /p:Configuration=Release /p:Platform=x86",
                     FileName = pathToMsBuild,
                     CreateNoWindow = true,
                     WindowStyle = ProcessWindowStyle.Hidden,
@@ -65,7 +53,6 @@ namespace Panacea.Tools.Release
                 if (process.ExitCode == 0)
                 {
                     MessageHelper.OnMessage("Build was successful!");
-                    sinfo.ProjectNames = Directory.GetDirectories(sinfo.PluginsBuildPath).Select(s => s.Remove(0, s.LastIndexOf('\\') + 1)).ToList();
                 }
                 else
                 {

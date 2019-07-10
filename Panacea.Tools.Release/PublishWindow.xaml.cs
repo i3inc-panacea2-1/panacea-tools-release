@@ -26,11 +26,6 @@ namespace Panacea.Tools.Release
             InitializeComponent();
         }
 
-        private ProjectHelper _projectHelper;
-        public PublishWindow(ProjectHelper projectHelper):this()
-        {
-            _projectHelper = projectHelper;
-        }
 
         private async void Main_Loaded(object sender, RoutedEventArgs e)
         {
