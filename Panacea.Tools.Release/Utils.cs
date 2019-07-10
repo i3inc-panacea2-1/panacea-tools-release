@@ -1,4 +1,6 @@
 ﻿using Mono.Cecil;
+using Panacea.Tools.Release.Helpers;
+using Panacea.Tools.Release.Models;
 using PluginPackager2.Models;
 using Redmine.Net.Api;
 using Redmine.Net.Api.Types;
@@ -28,9 +30,9 @@ namespace Panacea.Tools.Release
         {
             var files = Directory.GetFiles(path, "*.*", SearchOption.AllDirectories)
                                  .OrderBy(p => p).ToList();
-            foreach(var file in files.ToList())
+            foreach (var file in files.ToList())
             {
-                if(foldersToExclude.Any(x=> file.StartsWith(x)))
+                if (foldersToExclude.Any(x => file.StartsWith(x)))
                 {
                     files.Remove(file);
                 }
@@ -59,13 +61,53 @@ namespace Panacea.Tools.Release
 
         public static void Panic(string message, params string[] param)
         {
-            MessageBox.Show(String.Format(message, param), "Error",
+            MessageBox.Show(string.Format(message, param), "Error",
                             MessageBoxButton.OK, MessageBoxImage.Error);
             Application.Current.Dispatcher.Invoke(() =>
             {
                 Application.Current.Shutdown();
             });
 
+        }
+
+        static List<LocalProject> _projects = new List<LocalProject>();
+
+        public static List<LocalProject> Applications { get => _projects.Where(p => p.ProjectType == ProjectType.Application).OrderBy(p=>p.Name).ToList(); }
+
+        public static List<LocalProject> Modules { get => _projects.Where(p => p.ProjectType == ProjectType.Module).OrderBy(p => p.Name).ToList(); }
+
+        public static async Task DiscoverSolution()
+        {
+            MessageHelper.OnMessage("Fetching Git information");
+            var repos = await GitHelper.GetAllRepositoriesAsync();
+            var settings = GitHelper.GetGitSettings();
+            foreach (var r in repos.Where(rr => rr.Name.StartsWith("Panacea.Modules")))
+            {
+                var project = new LocalProject(Path.Combine(settings.RootDir, "Modules", r.Name, "src", r.Name, r.Name + ".csproj"));
+                //project.ThrowIfInvalid();
+                _projects.Add(project);
+                Debug.WriteLine(project.ProjectType);
+            }
+
+            foreach (var r in repos.Where(rr => rr.Name.StartsWith("Panacea.Applications")))
+            {
+                var project = new LocalProject(Path.Combine(settings.RootDir, "Applications", r.Name, "src", r.Name, r.Name + ".csproj"));
+                //project.ThrowIfInvalid();
+                _projects.Add(project);
+                Debug.WriteLine(project.ProjectType);
+            }
+            var panaceaRepo = repos.First(rr => rr.Name == "Panacea");
+            var panacea = new LocalProject(Path.Combine(settings.RootDir, "Applications", panaceaRepo.Name, "src", panaceaRepo.Name, panaceaRepo.Name + ".csproj"));
+            Debug.WriteLine(panacea.ProjectType);
+            //project.ThrowIfInvalid();
+            _projects.Add(panacea);
+
+            foreach(var project in _projects)
+            {
+                MessageHelper.OnMessage("Fetching remote info for: " + project.Name);
+                await project.GetRemoteInfoAsync();
+                await project.InitializeAsync();
+            }
         }
     }
 }

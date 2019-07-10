@@ -45,61 +45,65 @@ namespace Panacea.Tools.Release
 
             try
             {
-                var sinfo = Utils.DiscoverSolution();
-                await Builder.Build(sinfo);
-                var projectHelper = new ProjectHelper(sinfo);
-                await projectHelper.GetPluginProjectInfo();
-                await projectHelper.GetCoreProjectInfo();
+                await Utils.DiscoverSolution();
+                //await Builder.Build(sinfo);
+                //var projectHelper = new ProjectHelper(sinfo);
+                //await projectHelper.GetPluginProjectInfo();
+                //await projectHelper.GetCoreProjectInfo();
 
-                var translations = await TranslatorParser.GetTranslations(Path.GetDirectoryName(sinfo.SolutionName));
-                
-                if (translations.ContainsKey("core"))
+                //var translations = await TranslatorParser.GetTranslations(Path.GetDirectoryName(sinfo.SolutionName));
+
+                //if (translations.ContainsKey("core"))
+                //{
+                //    foreach (var str in translations["core"].Where(str => !projectHelper.CoreProjectInfo.Translations.Contains(str)))
+                //    {
+                //        projectHelper.CoreProjectInfo.Translations.Add(str);
+                //        projectHelper.CoreProjectInfo.ManifestChanged = true;
+                //    }
+                //}
+                //var trans = new Dictionary<string, List<String>>();
+                //trans.Add("core", projectHelper.CoreProjectInfo.Translations);
+                //var projectsWithoutTranslations = new List<string>();
+                //foreach (var proj in projectHelper.PluginsProjectInfo)
+                //{
+                //    if (translations.ContainsKey(proj.Name))
+                //    {
+                //        foreach (var str in translations[proj.Name].Where(str => !proj.Translations.Contains(str)))
+                //        {
+                //            proj.Translations.Add(str);
+                //            proj.ManifestChanged = true;
+                //        }
+                //        trans.Add(proj.Name, proj.Translations);
+                //        proj.Translations = proj.Translations.Where(c => !c.Contains("β") && !c.Contains("€")).ToList();
+                //    }
+                //    else projectsWithoutTranslations.Add(proj.Name);
+                //}
+
+                //using (var writer = new StreamWriter("translations.txt")) writer.Write(JsonSerializer.SerializeToString(trans));
+                //if (projectsWithoutTranslations.Count > 0)
+                //    MessageBox.Show(String.Format("No translations found for plugins: {0}",
+                //        String.Join(Environment.NewLine, projectsWithoutTranslations)));
+
+                //await projectHelper.CalculateLocalCoreFiles();
+                //await projectHelper.CalculateLocalFiles();
+
+                //await RedmineHelper.GetChangesFromRedmine();
+                //await RedmineHelper.AssignTicketsToProject(projectHelper.CoreProjectInfo);
+                //foreach (var proj in projectHelper.PluginsProjectInfo)
+                //{
+                //    await RedmineHelper.AssignTicketsToProject(proj);
+                //}
+
+                //await projectHelper.BuildSignatures();
+                //await projectHelper.BuildCoreSignatures();
+                //await projectHelper.CheckCompatibilityOfPreviousPluginsWithNewCore();
+                //await projectHelper.CheckCompatibilityOfNewPluginsWithNewCore();
+
+                var overview = new ProjectsOverview()
                 {
-                    foreach (var str in translations["core"].Where(str => !projectHelper.CoreProjectInfo.Translations.Contains(str)))
-                    {
-                        projectHelper.CoreProjectInfo.Translations.Add(str);
-                        projectHelper.CoreProjectInfo.ManifestChanged = true;
-                    }
-                }
-                var trans = new Dictionary<string, List<String>>();
-                trans.Add("core", projectHelper.CoreProjectInfo.Translations);
-                var projectsWithoutTranslations = new List<string>();
-                foreach (var proj in projectHelper.PluginsProjectInfo)
-                {
-                    if (translations.ContainsKey(proj.Name))
-                    {
-                        foreach (var str in translations[proj.Name].Where(str => !proj.Translations.Contains(str)))
-                        {
-                            proj.Translations.Add(str);
-                            proj.ManifestChanged = true;
-                        }
-                        trans.Add(proj.Name, proj.Translations);
-                        proj.Translations = proj.Translations.Where(c => !c.Contains("β") && !c.Contains("€")).ToList();
-                    }
-                    else projectsWithoutTranslations.Add(proj.Name);
-                }
-                
-                using (var writer = new StreamWriter("translations.txt")) writer.Write(JsonSerializer.SerializeToString(trans));
-                if (projectsWithoutTranslations.Count > 0)
-                    MessageBox.Show(String.Format("No translations found for plugins: {0}",
-                        String.Join(Environment.NewLine, projectsWithoutTranslations)));
-
-                await projectHelper.CalculateLocalCoreFiles();
-                await projectHelper.CalculateLocalFiles();
-
-                await RedmineHelper.GetChangesFromRedmine();
-                await RedmineHelper.AssignTicketsToProject(projectHelper.CoreProjectInfo);
-                foreach (var proj in projectHelper.PluginsProjectInfo)
-                {
-                    await RedmineHelper.AssignTicketsToProject(proj);
-                }
-
-                await projectHelper.BuildSignatures();
-                await projectHelper.BuildCoreSignatures();
-                await projectHelper.CheckCompatibilityOfPreviousPluginsWithNewCore();
-                await projectHelper.CheckCompatibilityOfNewPluginsWithNewCore();
-
-                ProjectsOverview overview = new ProjectsOverview(projectHelper);
+                    Applications = Utils.Applications,
+                    Modules = Utils.Modules
+                };
                 overview.Show();
 
                 this.Close();

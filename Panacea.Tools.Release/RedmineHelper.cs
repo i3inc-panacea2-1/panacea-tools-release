@@ -31,36 +31,12 @@ namespace Panacea.Tools.Release
             rm = new RedmineManager("https://redmine.dotbydot.eu", "00a4769287faca4f7dc735fc48101699d6284dfe");
         }
 
-        public static Task AssignTicketsToProject(ProjectInfo info)
+        public static Task AssignTicketsToProject(RemoteProject info)
         {
             MessageHelper.OnMessage("Analyzing issues...");
             return Task.Run(() =>
             {
-                if (
-                    issues.Any(
-                        iss =>
-                            iss.CustomFields.Any(
-                                cf =>
-                                    cf.Name == "Package" && cf.Values.Count > 0 &&
-                                    cf.Values.Any(
-                                        n =>
-                                            n.ToString()
-                                                .Replace(" ", "")
-                                                .Trim()
-                                                .Equals(info.Name, StringComparison.OrdinalIgnoreCase)))))
-                {
-                    info.Issues = issues.Where(
-                        iss =>
-                            iss.CustomFields.Any(
-                                cf =>
-                                    cf.Name == "Package" && cf.Values.Count > 0 &&
-                                    cf.Values.Any(
-                                        n =>
-                                            n.ToString()
-                                                .Replace(" ", "")
-                                                .Trim()
-                                                .Equals(info.Name, StringComparison.OrdinalIgnoreCase)))).ToList();
-                }
+                
 
             });
         }
@@ -163,7 +139,7 @@ namespace Panacea.Tools.Release
         }
         static List<Issue> _rejectedIssues;
 
-        public static Task<string> BuildReport(List<ProjectInfo> projectInfo, ProjectInfo core)
+        public static Task<string> BuildReport(List<RemoteProject> projectInfo, RemoteProject core)
         {
             return Task.Run(() =>
             {
@@ -333,24 +309,24 @@ namespace Panacea.Tools.Release
 
                     report = report.Replace("{rejected-tickets}", aliasBuilder.ToString());
                 }
-                report = report.Replace("{core_version}", core.SuggestedVersion);
-                release.CoreClientVersion = core.SuggestedVersion;
+                report = report.Replace("{core_version}", core.Version);
+                release.CoreClientVersion = core.Version;
                 release.UserPluginsVersions = new List<string>();
-                if (projectInfo.Any(p => p.Update))
-                {
-                    aliasBuilder.Clear();
-                    var updated = projectInfo.Where(p => p.Update).ToList();
-                    List<string> plversions = new List<string>();
-                    updated.ForEach(p =>
-                    {
-                        plversions.Add(string.Format("{0} {1}", p.Name, p.SuggestedVersion));
-                        aliasBuilder.Append(string.Format("<li>{0} {1}</li>", p.Name, p.SuggestedVersion));
-                    });
-                    release.UserPluginsVersions = plversions;
-                    report = report.Replace("{plugin_versions}", aliasBuilder.ToString());
-                }
-                writer.Write(report);
-                writer.Close();
+                //if (projectInfo.Any(p => p.Update))
+                //{
+                //    aliasBuilder.Clear();
+                //    var updated = projectInfo.Where(p => p.Update).ToList();
+                //    List<string> plversions = new List<string>();
+                //    updated.ForEach(p =>
+                //    {
+                //        plversions.Add(string.Format("{0} {1}", p.Name, p.SuggestedVersion));
+                //        aliasBuilder.Append(string.Format("<li>{0} {1}</li>", p.Name, p.SuggestedVersion));
+                //    });
+                //    release.UserPluginsVersions = plversions;
+                //    report = report.Replace("{plugin_versions}", aliasBuilder.ToString());
+                //}
+                //writer.Write(report);
+                //writer.Close();
                 var json = JsonSerializer.SerializeToString(release);
                 using (var sw = new StreamWriter("Report/report.json"))
                 {

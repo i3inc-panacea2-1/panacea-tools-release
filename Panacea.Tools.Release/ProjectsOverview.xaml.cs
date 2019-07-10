@@ -23,40 +23,30 @@ namespace Panacea.Tools.Release
     /// </summary>
     public partial class ProjectsOverview : Window
     {
-        public static readonly DependencyProperty ProjectHelperProperty =
-            DependencyProperty.Register("ProjectHelper",
-                typeof(ProjectHelper),
-                typeof(ProjectsOverview),
-                new FrameworkPropertyMetadata(null));
-        public ProjectHelper ProjectHelper
+
+
+        public List<LocalProject> Applications
         {
-            get { return (ProjectHelper)GetValue(ProjectHelperProperty); }
-            set { SetValue(ProjectHelperProperty, value); }
+            get { return (List<LocalProject>)GetValue(ApplicationsProperty); }
+            set { SetValue(ApplicationsProperty, value); }
         }
 
-        public static readonly DependencyProperty TicketCountProperty =
-            DependencyProperty.Register("TicketCount",
-                typeof(int),
-                typeof(ProjectsOverview),
-                new FrameworkPropertyMetadata(null));
+        // Using a DependencyProperty as the backing store for Applications.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ApplicationsProperty =
+            DependencyProperty.Register("Applications", typeof(List<LocalProject>), typeof(ProjectsOverview), new PropertyMetadata(null));
 
-        public int TicketCount
+
+
+        public List<LocalProject> Modules
         {
-            get { return (int)GetValue(TicketCountProperty); }
-            set { SetValue(TicketCountProperty, value); }
+            get { return (List<LocalProject>)GetValue(ModulesProperty); }
+            set { SetValue(ModulesProperty, value); }
         }
 
-        public static readonly DependencyProperty ProjectsToBeUpdatedProperty =
-            DependencyProperty.Register("ProjectsToBeUpdated",
-                typeof(int),
-                typeof(ProjectsOverview),
-                new FrameworkPropertyMetadata(null));
+        // Using a DependencyProperty as the backing store for Modules.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty ModulesProperty =
+            DependencyProperty.Register("Modules", typeof(List<LocalProject>), typeof(ProjectsOverview), new PropertyMetadata(null));
 
-        public int ProjectsToBeUpdated
-        {
-            get { return (int)GetValue(ProjectsToBeUpdatedProperty); }
-            set { SetValue(ProjectsToBeUpdatedProperty, value); }
-        }
 
         public ProjectsOverview()
         {
@@ -66,9 +56,7 @@ namespace Panacea.Tools.Release
         public ProjectsOverview(ProjectHelper helper)
             : this()
         {
-            ProjectHelper = helper;
-            TicketCount = ProjectHelper.PluginsProjectInfo.Sum(p => p.Bugs) + ProjectHelper.PluginsProjectInfo.Sum(p => p.Features) + ProjectHelper.CoreProjectInfo.Bugs + ProjectHelper.CoreProjectInfo.Features;
-            ProjectsToBeUpdated = ProjectHelper.PluginsProjectInfo.Count(p => p.RequiresUpdate) + (ProjectHelper.CoreProjectInfo.RequiresUpdate ? 1 : 0);
+           
         }
 
 
@@ -76,27 +64,24 @@ namespace Panacea.Tools.Release
         private void ButtonPublish_Click(object sender, RoutedEventArgs e)
         {
 
-            foreach (var proj in ProjectHelper.PluginsProjectInfo) proj.RedmineVersion = RedmineHelper.RedmineVersion;
-            ProjectHelper.CoreProjectInfo.RedmineVersion = RedmineHelper.RedmineVersion;
-            var w = new PublishWindow(ProjectHelper) { Owner = this };
-            w.ShowDialog();
+            
         }
         private async void ButtonReport_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                var json = await RedmineHelper.BuildReport(ProjectHelper.PluginsProjectInfo, ProjectHelper.CoreProjectInfo);
-                var req = (HttpWebRequest) WebRequest.Create("http://internal.dotbydot.eu/store_release_report/");
-                req.Accept = "application/json";
-                req.ContentType = "application/x-www-form-urlencoded";
-                req.Method = WebRequestMethods.Http.Post;
-                var array = Encoding.UTF8.GetBytes("username=dbdinternal&password=dbdinternal01&releaseReport=" + System.Uri.EscapeDataString(json));
-                using (Stream dataStream = req.GetRequestStream())
-                {
-                    dataStream.Write(array, 0, array.Length);
-                }
-                var response = req.GetResponse();
-                MessageBox.Show(((HttpWebResponse) response).StatusDescription);
+                //var json = await RedmineHelper.BuildReport(ProjectHelper.PluginsProjectInfo, ProjectHelper.CoreProjectInfo);
+                //var req = (HttpWebRequest) WebRequest.Create("http://internal.dotbydot.eu/store_release_report/");
+                //req.Accept = "application/json";
+                //req.ContentType = "application/x-www-form-urlencoded";
+                //req.Method = WebRequestMethods.Http.Post;
+                //var array = Encoding.UTF8.GetBytes("username=dbdinternal&password=dbdinternal01&releaseReport=" + System.Uri.EscapeDataString(json));
+                //using (Stream dataStream = req.GetRequestStream())
+                //{
+                //    dataStream.Write(array, 0, array.Length);
+                //}
+                //var response = req.GetResponse();
+                //MessageBox.Show(((HttpWebResponse) response).StatusDescription);
 
             }
             catch (Exception ex)
@@ -107,18 +92,12 @@ namespace Panacea.Tools.Release
        
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            foreach (var info in ProjectHelper.PluginsProjectInfo)
-            {
-                info.Update = info.RequiresUpdate;
-            }
+           
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            foreach (var info in ProjectHelper.PluginsProjectInfo)
-            {
-                info.Update = false;
-            }
+           
         }
 
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
@@ -128,31 +107,20 @@ namespace Panacea.Tools.Release
 
         private void Button_Click_2(object sender, RoutedEventArgs e)
         {
-            var version = Version.Parse(ProjectHelper.CoreProjectInfo.SuggestedVersion);
-            ProjectHelper.CoreProjectInfo.SuggestedVersion = new Version(version.Major, version.Minor + 1, 0, 0).ToString();
         }
 
         private void Button_Click_3(object sender, RoutedEventArgs e)
         {
-            var version = Version.Parse(ProjectHelper.CoreProjectInfo.SuggestedVersion);
-            if (version.Minor > 0)
-                ProjectHelper.CoreProjectInfo.SuggestedVersion = new Version(version.Major, version.Minor - 1, version.Build, version.Revision).ToString();
         }
 
         private void Button_Click_4(object sender, RoutedEventArgs e)
         {
-            var pi = ((Button)sender).Tag as ProjectInfo;
-            var version = Version.Parse(pi.SuggestedVersion);
-            
-            pi.SuggestedVersion = new Version(version.Major, version.Minor + 1, 0, 0).ToString();
+          
         }
 
         private void Button_Click_5(object sender, RoutedEventArgs e)
         {
-            var pi = ((Button)sender).Tag as ProjectInfo;
-            var version = Version.Parse(((ProjectInfo)((Button)sender).Tag).SuggestedVersion);
-            if (version.Minor > 0)
-                pi.SuggestedVersion = new Version(version.Major, version.Minor - 1, version.Build, version.Revision).ToString();
+           
         }
 
 

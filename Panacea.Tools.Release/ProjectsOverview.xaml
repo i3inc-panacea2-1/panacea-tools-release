@@ -214,7 +214,7 @@
                             <ColumnDefinition Width="3*" />
                             <ColumnDefinition Width="2*" />
                         </Grid.ColumnDefinitions>
-                        <ListView ItemsSource="{Binding ElementName=Main, Path=ProjectHelper.PluginsProjectInfo}" Name="List" Grid.Row="1"
+                        <ListView ItemsSource="{Binding ElementName=Main, Path=Modules}" Name="List" Grid.Row="1"
                               SelectedIndex="0">
                             <ListView.Resources>
                                 <Style TargetType="ListViewItem" BasedOn="{x:Null}">
@@ -228,11 +228,10 @@
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Width="auto" Header="Name" DisplayMemberBinding="{Binding Name}" />
-                                    <GridViewColumn Width="auto" Header="Local"
-                                                DisplayMemberBinding="{Binding CurrentVersion}">
+                                    <GridViewColumn Width="auto" Header="Local">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock TextAlignment="Center" Text="{Binding CurrentVersion}"
+                                                <TextBlock TextAlignment="Center" Text="{Binding Version}"
                                                        IsEnabled="False" />
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
@@ -240,7 +239,7 @@
                                     <GridViewColumn Width="auto" Header="Remote">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
-                                                <TextBlock TextAlignment="Center" Text="{Binding RemoteVersion}"
+                                                <TextBlock TextAlignment="Center" Text="{Binding RemoteProject.Version}"
                                                        IsEnabled="False" />
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
@@ -249,39 +248,15 @@
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
                                                 <CheckBox HorizontalAlignment="Center"
-                                                      IsChecked="{Binding HasDifferentProjectHash, Mode=OneWay}"
+                                                      IsChecked="{Binding HasDifferentHash, Mode=OneWay}"
                                                       IsEnabled="False" />
                                             </DataTemplate>
                                         </GridViewColumn.CellTemplate>
                                     </GridViewColumn>
 
-                                    <GridViewColumn Width="auto" Header="Signatures">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <CheckBox HorizontalAlignment="Center"
-                                                      IsChecked="{Binding SignaturesChanged, Mode=OneWay}"
-                                                      IsEnabled="False" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Width="auto" Header="Compatibility">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <CheckBox HorizontalAlignment="Center"
-                                                      IsChecked="{Binding CompatibilityChanged, Mode=OneWay}"
-                                                      IsEnabled="False" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
-                                    <GridViewColumn Width="auto" Header="Manifest">
-                                        <GridViewColumn.CellTemplate>
-                                            <DataTemplate>
-                                                <CheckBox HorizontalAlignment="Center"
-                                                      IsChecked="{Binding ManifestChanged, Mode=OneWay}"
-                                                      IsEnabled="False" />
-                                            </DataTemplate>
-                                        </GridViewColumn.CellTemplate>
-                                    </GridViewColumn>
+                                    
+                                    
+                                    
                                     <GridViewColumn Width="auto" Header="Bugs">
                                         <GridViewColumn.CellTemplate>
                                             <DataTemplate>
