@@ -78,6 +78,7 @@
     </ApplicationDefinition>
     <Compile Include="Builder.cs" />
     <Compile Include="FileUploader.cs" />
+    <Compile Include="LocalProject.cs" />
     <Compile Include="MessageHelper.cs" />
     <Compile Include="Models\Feature.cs" />
     <Compile Include="Models\GenericResponse.cs" />
@@ -167,6 +168,9 @@
     <PackageReference Include="ServiceStack.Text">
       <Version>4.5.4</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Report\report.html" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
