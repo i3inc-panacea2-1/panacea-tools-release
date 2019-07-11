@@ -12,7 +12,7 @@ namespace Panacea.Tools.Release
 {
     public static class Builder
     {
-        
+
         static string FindMsBuild()
         {
             var instances = MSBuildLocator.QueryVisualStudioInstances(VisualStudioInstanceQueryOptions.Default);
@@ -22,18 +22,18 @@ namespace Panacea.Tools.Release
 
         const string pathToMsBuild = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin\MsBuild.exe";
 
-        public static Task Build(LocalProject sinfo)
+        public static Task Build(LocalProject sinfo, string path = null)
         {
             FindMsBuild();
             return Task.Run(() =>
             {
-                
+                if (!File.Exists(sinfo.CsProjPath)) return;
                 MessageHelper.OnMessage(String.Format("Building {0}...", Path.GetFileName(sinfo.CsProjPath)));
 
                 var info = new ProcessStartInfo
                 {
                     Arguments =
-                        "\"" + sinfo.CsProjPath + "\" /t:Restore,Rebuild /p:Configuration=Release /p:Platform=x86",
+                        "\"" + sinfo.CsProjPath + "\" /t:Restore,Rebuild /p:Configuration=Release /p:Platform=x86 " + (path != null ? "/p:OutputPath=\"" + path + "\"" : ""),
                     FileName = pathToMsBuild,
                     CreateNoWindow = true,
                     WindowStyle = ProcessWindowStyle.Hidden,
@@ -59,7 +59,7 @@ namespace Panacea.Tools.Release
                     throw new Exception("Build failed!");
                 }
                 process.Dispose();
-                
+
             });
         }
     }

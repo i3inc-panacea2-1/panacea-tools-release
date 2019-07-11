@@ -106,8 +106,11 @@ namespace Panacea.Tools.Release
             Debug.WriteLine(panacea.ProjectType);
             //project.ThrowIfInvalid();
             _projects.Add(panacea);
+            MessageHelper.OnMessage("Fetching remote info for: " + panacea.Name);
+            await panacea.GetRemoteInfoAsync();
+            await panacea.InitializeAsync();
 
-            foreach (var project in _projects)
+            foreach (var project in _projects.Where(p=>p.ProjectType == ProjectType.Module))
             {
                 MessageHelper.OnMessage("Fetching remote info for: " + project.Name);
                 await project.GetRemoteInfoAsync();

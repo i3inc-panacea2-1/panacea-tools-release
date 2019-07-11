@@ -55,8 +55,21 @@ namespace Panacea.Tools.Release
 
         private async void ButtonPublish_Click(object sender, RoutedEventArgs e)
         {
-            var selected = Modules.Where(m => m.Update);
             string path = Path.Combine(Directory.GetCurrentDirectory(), "exported");
+
+
+            var panacea = Applications.First(a => a.Name == "Panacea");
+            if(panacea.Update)
+            {
+                foreach(var app in Applications)
+                {
+                    await app.Build();
+                }
+                await panacea.BuildDeltaZip(path);
+            }
+            
+            var selected = Modules.Where(m => m.Update);
+            
             foreach (var module in selected)
             {
                 await module.Build();

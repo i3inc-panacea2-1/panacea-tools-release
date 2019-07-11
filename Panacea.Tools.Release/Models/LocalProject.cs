@@ -166,7 +166,7 @@ namespace Panacea.Tools.Release.Models
             }
         }
 
-        public string CommitHash { get => _repo.Head.Tip.Sha; }
+        public string CommitHash { get => _repo?.Head.Tip.Sha; }
 
         public string CsProjPath { get; }
 
@@ -174,7 +174,15 @@ namespace Panacea.Tools.Release.Models
 
         public string FullName { get => Path.GetFileName(CsProjPath).Replace(".csproj", ""); }
 
-        public string Name { get => Path.GetFileName(CsProjPath).Replace(".csproj", "").Split('.').Last(); }
+        public string Name
+        {
+            get
+            {
+                var name = string.Join(".", Path.GetFileName(CsProjPath).Replace(".csproj", "").Split('.').Skip(2));
+                if (!string.IsNullOrEmpty(name)) return name;
+                return Path.GetFileName(CsProjPath).Replace(".csproj", "").Split('.').Last();
+            }
+        }
 
         ProjectType _type = ProjectType.Unknown;
         public ProjectType ProjectType
@@ -319,7 +327,7 @@ namespace Panacea.Tools.Release.Models
                     foreach (var file in Files)
                     {
                         var filename = Path.GetFileName(file.Name);
-                        var remoteFileName = file.Name.Substring(BuildBasePath.Length + 1, file.Name.Length - BuildBasePath.Length - 1).Replace("\\","/");
+                        var remoteFileName = file.Name.Substring(BuildBasePath.Length + 1, file.Name.Length - BuildBasePath.Length - 1).Replace("\\", "/");
                         var zipfilePath = Path.Combine("files", file.Name.Substring(BuildBasePath.Length + 1, Path.GetDirectoryName(file.Name).Length - BuildBasePath.Length)).Replace("\\", "/");
                         var zipfullName = Path.Combine(zipfilePath, filename).Replace("\\", "/");
                         //if (filename.EndsWith(".dll.config") || filename == "manifest.json") continue;
@@ -359,7 +367,7 @@ namespace Panacea.Tools.Release.Models
                     Version = SuggestedVersion.ToString(),
                     Translations = new List<string>(),
                     Files = Files.ToList(),
-                    Dependencies = Dependencies.Select(d=>d.Name + "-" + d.Version).ToList(),
+                    Dependencies = Dependencies.Select(d => d.Name + "-" + d.Version).ToList(),
                     RedmineVersion = "2.19.6.2"
                 };
 
@@ -379,7 +387,27 @@ namespace Panacea.Tools.Release.Models
 
         public async Task Build()
         {
-            await Builder.Build(this);
+            if (ProjectType == ProjectType.Module)
+                await Builder.Build(this);
+            else
+            {
+                // patch to match Core from previous release flow
+                if (Name == "Panacea")
+                {
+                    await Builder.Build(this);
+                }
+                else if (Name == "IBT.Updater")
+                {
+
+                }
+                else
+                {
+                    var dir = new DirectoryInfo(BasePath);
+                    var panacea = dir.Parent.Parent.Parent.FullName;
+                    var bin = Path.Combine(panacea, "Panacea", "src", "Panacea", "bin", "x86", "Release", "Applications", Name);
+                    await Builder.Build(this, bin);
+                }
+            }
         }
 
     }
