@@ -2,14 +2,41 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Panacea.Tools.Release.Models
 {
+    [DataContract]
     public class ProjectsViewModel
     {
-        public ObservableCollection<string> UserPlugins { get; set; }
+        [DataMember(Name = "files")]
+        public List<ProjectFileInfo> Files { get; set; }
 
+        [DataMember(Name = "files")]
+        public List<string> Translations { get; set; }
+
+        [DataMember(Name = "author")]
+        public string Author { get; set; }
+
+        [DataMember(Name = "projectHash")]
+        public string ProjectHash { get; set; }
+
+        [DataMember(Name = "version")]
+        public string Version { get; set; }
+
+        [DataMember(Name = "name")]
+        public string Name { get; set; }
+
+        [DataMember(Name = "releaseDate")]
+        public string ReleaseDate { get; set; }
+
+        [DataMember(Name = "signatures")]
+        public List<string> Dependencies { get; set; }
+
+
+        [DataMember(Name = "redmineVersion")]
+        public string RedmineVersion { get; set; }
     }
 }

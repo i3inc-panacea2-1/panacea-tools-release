@@ -351,7 +351,19 @@ namespace Panacea.Tools.Release.Models
                     zip.AddFile(string.Format("{0}/deltas.json", path), "/");
                 }
 
-                File.WriteAllText(string.Format("{0}/manifest.json", path), JsonSerializer.SerializeToString(this));
+                var vm = new ProjectsViewModel()
+                {
+                    Name = Name,
+                    Author = "Dotbydot",
+                    ReleaseDate = DateTime.Now.ToString("yyyy-MM-dd"),
+                    Version = SuggestedVersion.ToString(),
+                    Translations = new List<string>(),
+                    Files = Files.ToList(),
+                    Dependencies = Dependencies.Select(d=>d.Name + "-" + d.Version).ToList(),
+                    RedmineVersion = "2.19.6.2"
+                };
+
+                File.WriteAllText(string.Format("{0}/manifest.json", path), JsonSerializer.SerializeToString(vm));
 
                 zip.AddFile(string.Format("{0}/manifest.json", path), "/");
                 //zip.CompressionLevel = CompressionLevel.Default;
