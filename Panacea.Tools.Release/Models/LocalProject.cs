@@ -1,7 +1,6 @@
 ﻿using Ionic.Zip;
 using LibGit2Sharp;
 using LibGit2Sharp.Handlers;
-using Microsoft.Build.Evaluation;
 using Panacea.Tools.Release.Helpers;
 using ServiceStack.Text;
 using System;
