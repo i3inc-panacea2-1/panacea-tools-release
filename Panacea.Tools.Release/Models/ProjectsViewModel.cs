@@ -11,10 +11,22 @@ namespace Panacea.Tools.Release.Models
     [DataContract]
     public class ProjectsViewModel
     {
+        [DataMember(Name = "coreVersion")]
+        public string CoreVersion { get; set; } = "2.0.12.52";
+
+        [DataMember(Name = "file")]
+        public string File { get; set; } = "deprecated";
+
+        [DataMember(Name = "ns")]
+        public string Namespace { get; set; } = "deprecated";
+
+        [DataMember(Name = "classname")]
+        public string ClassName { get; set; } = "deprecated";
+
         [DataMember(Name = "files")]
         public List<ProjectFileInfo> Files { get; set; }
 
-        [DataMember(Name = "files")]
+        [DataMember(Name = "translations")]
         public List<string> Translations { get; set; }
 
         [DataMember(Name = "author")]

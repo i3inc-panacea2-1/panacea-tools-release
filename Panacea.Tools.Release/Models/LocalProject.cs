@@ -258,7 +258,7 @@ namespace Panacea.Tools.Release.Models
             {
                 using (var md5 = MD5.Create())
                 {
-                    foreach (var f in Directory.GetFiles(Path.Combine(BasePath, "bin", "x86", "Release"))
+                    foreach (var f in Directory.GetFiles(Path.Combine(BasePath, "bin", "x86", "Release"), "*.*", SearchOption.AllDirectories)
                     .ToList())
                     {
                         var ifo = new ProjectFileInfo() { Name = f };
@@ -310,8 +310,11 @@ namespace Panacea.Tools.Release.Models
                     foreach (var file in Files)
                     {
                         var filename = Path.GetFileName(file.Name);
+                        var remoteFileName = file.Name.Substring(BuildBasePath.Length + 1, file.Name.Length - BuildBasePath.Length - 1).Replace("\\", "/");
+                        var zipfilePath = Path.Combine("files", file.Name.Substring(BuildBasePath.Length + 1, Path.GetDirectoryName(file.Name).Length - BuildBasePath.Length)).Replace("\\", "/");
+                        var zipfullName = Path.Combine(zipfilePath, filename).Replace("\\", "/");
                         //if (filename.EndsWith(".dll.config") || filename == "manifest.json") continue;
-                        zip.AddFile(Path.Combine(BasePath, file.Name), Path.Combine("files", Path.GetDirectoryName(file.Name)));
+                        zip.AddFile(file.Name, zipfilePath);
                     }
 
                 }
@@ -361,12 +364,24 @@ namespace Panacea.Tools.Release.Models
 
                 var vm = new ProjectsViewModel()
                 {
-                    Name = Name,
+                    Name = ProjectType == ProjectType.Application ? "core" : Name,
+                    ProjectHash = CommitHash,
                     Author = "Dotbydot",
                     ReleaseDate = DateTime.Now.ToString("yyyy-MM-dd"),
                     Version = SuggestedVersion.ToString(),
                     Translations = new List<string>(),
-                    Files = Files.ToList(),
+                    Files = Files.Select(file =>
+                    {
+                        var filename = Path.GetFileName(file.Name);
+                        var zipfilePath = Path.Combine(file.Name.Substring(BuildBasePath.Length + 1, Path.GetDirectoryName(file.Name).Length - BuildBasePath.Length)).Replace("\\", "/");
+                        var zipfullName = Path.Combine(zipfilePath, filename).Replace("\\", "/");
+                        return new ProjectFileInfo()
+                        {
+                            Name = zipfullName,
+                            Md5Hash = file.Md5Hash,
+                            Size = file.Size
+                        };
+                    }).ToList(),
                     Dependencies = Dependencies.Select(d => d.Name + "-" + d.Version).ToList(),
                     RedmineVersion = "2.19.6.2"
                 };
@@ -375,7 +390,7 @@ namespace Panacea.Tools.Release.Models
 
                 zip.AddFile(string.Format("{0}/manifest.json", path), "/");
                 //zip.CompressionLevel = CompressionLevel.Default;
-                zip.Save(string.Format("{0}/{1}.zip", path, Name));
+                zip.Save(string.Format("{0}/{1}.zip", path, ProjectType == ProjectType.Application ? "core" : Name));
                 zip.Dispose();
 
 
@@ -398,13 +413,18 @@ namespace Panacea.Tools.Release.Models
                 }
                 else if (Name == "IBT.Updater")
                 {
-
+                    var dir = new DirectoryInfo(BasePath);
+                    var panacea = dir.Parent.Parent.Parent.FullName;
+                    var bin = Path.Combine(panacea, "Panacea", "src", "Panacea", "bin", "x86", "Release", "Updater");
+                    Directory.Delete(bin, true);
+                    await Builder.Build(this, bin);
                 }
                 else
                 {
                     var dir = new DirectoryInfo(BasePath);
                     var panacea = dir.Parent.Parent.Parent.FullName;
                     var bin = Path.Combine(panacea, "Panacea", "src", "Panacea", "bin", "x86", "Release", "Applications", Name);
+                    Directory.Delete(bin, true);
                     await Builder.Build(this, bin);
                 }
             }

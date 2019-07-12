@@ -2,6 +2,7 @@
 using Panacea.Tools.Release.Models;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -57,24 +58,52 @@ namespace Panacea.Tools.Release
         {
             string path = Path.Combine(Directory.GetCurrentDirectory(), "exported");
 
+            var win = new PublishWindow();
+            win.Show();
 
+            var selected = Modules.Where(m => m.Update);
+
+
+            win.Progress.Maximum = selected.Count();
+            win.Progress.IsIndeterminate = false;
             var panacea = Applications.First(a => a.Name == "Panacea");
             if(panacea.Update)
             {
-                foreach(var app in Applications)
+                win.Progress.Maximum++;
+                win.StatusText.Text = "Building applications...";
+                foreach (var app in Applications)
                 {
                     await app.Build();
                 }
+                win.StatusText.Text = "Building core zip...";
                 await panacea.BuildDeltaZip(path);
+                win.StatusText.Text = "Uploading core...";
+                var res = await FileUploader.UploadFile(String.Format("{0}/{1}.zip", path, "core"),
+                                ConfigurationManager.AppSettings["server"] + "admin/remote/robopost/manifest/");
+                if (!res.Success)
+                {
+                    throw new Exception(res.Message);
+                }
+
             }
-            
-            var selected = Modules.Where(m => m.Update);
             
             foreach (var module in selected)
             {
+                
+                win.StatusText.Text = "Building " + module.Name+ "...";
                 await module.Build();
+                win.StatusText.Text = "Building " + module.Name + " zip...";
                 await module.BuildDeltaZip(path);
+                win.Progress.IsIndeterminate = false;
+                win.StatusText.Text = "Uploading " + module.Name + "...";
+                var res = await FileUploader.UploadFile(String.Format("{0}/{1}.zip", path, module.Name),
+                               ConfigurationManager.AppSettings["server"] + "admin/remote/robopost/manifest/");
+                if (!res.Success)
+                {
+                    throw new Exception(res.Message);
+                }
             }
+            win.Close();
             
         }
         private async void ButtonReport_Click(object sender, RoutedEventArgs e)

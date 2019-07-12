@@ -110,11 +110,19 @@ namespace Panacea.Tools.Release
             await panacea.GetRemoteInfoAsync();
             await panacea.InitializeAsync();
 
-            foreach (var project in _projects.Where(p=>p.ProjectType == ProjectType.Module))
+            foreach (var project in _projects.Where(p => p.ProjectType == ProjectType.Module).ToList())
             {
-                MessageHelper.OnMessage("Fetching remote info for: " + project.Name);
-                await project.GetRemoteInfoAsync();
-                await project.InitializeAsync();
+                try
+                {
+                    MessageHelper.OnMessage("Fetching remote info for: " + project.Name);
+                    await project.GetRemoteInfoAsync();
+                    await project.InitializeAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message);
+                    _projects.Remove(project);
+                }
             }
             MessageHelper.OnMessage("Analyzing...");
             var allDependencies = _projects
