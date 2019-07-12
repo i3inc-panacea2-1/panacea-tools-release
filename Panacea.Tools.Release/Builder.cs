@@ -17,13 +17,14 @@ namespace Panacea.Tools.Release
         {
             var instances = MSBuildLocator.QueryVisualStudioInstances(VisualStudioInstanceQueryOptions.Default);
             //if(instances.Any(i=>i.Version))
-            return null;
+            return instances.First().MSBuildPath;
         }
 
         const string pathToMsBuild = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin\MsBuild.exe";
 
         public static Task Build(LocalProject sinfo, string path = null)
         {
+            var msBuildPath = Path.Combine(FindMsBuild(),"msbuild.exe");
             FindMsBuild();
             return Task.Run(() =>
             {
@@ -34,7 +35,7 @@ namespace Panacea.Tools.Release
                 {
                     Arguments =
                         "\"" + sinfo.CsProjPath + "\" /t:Restore,Rebuild /p:Configuration=Release /p:Platform=x86 " + (path != null ? "/p:OutputPath=\"" + path + "\"" : ""),
-                    FileName = pathToMsBuild,
+                    FileName = msBuildPath,
                     CreateNoWindow = true,
                     WindowStyle = ProcessWindowStyle.Hidden,
                     UseShellExecute = false,
