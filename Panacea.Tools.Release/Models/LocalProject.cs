@@ -322,15 +322,19 @@ namespace Panacea.Tools.Release.Models
                         }
                     }
 
-                    foreach (var file in Files)
+                    foreach (var file in RemoteProject.Files)
                     {
-                        var filename = Path.GetFileName(file.Name);
-                        var remoteFileName = file.Name.Substring(BuildBasePath.Length + 1, file.Name.Length - BuildBasePath.Length - 1).Replace("\\", "/");
-                        var zipfilePath = Path.Combine("files", file.Name.Substring(BuildBasePath.Length + 1, Path.GetDirectoryName(file.Name).Length - BuildBasePath.Length)).Replace("\\", "/");
-                        var zipfullName = Path.Combine(zipfilePath, filename).Replace("\\", "/");
-                        if (!RemoteProject.Files.Any(lf => lf.Name == remoteFileName))
+                       
+                        if (!Files.Any(lf =>
                         {
-                            dleta.Removed.Add(zipfullName);
+                            var filename = Path.GetFileName(lf.Name);
+                            var remoteFileName = lf.Name.Substring(BuildBasePath.Length + 1, lf.Name.Length - BuildBasePath.Length - 1).Replace("\\", "/");
+                            var zipfilePath = Path.Combine("files", lf.Name.Substring(BuildBasePath.Length + 1, Path.GetDirectoryName(lf.Name).Length - BuildBasePath.Length)).Replace("\\", "/");
+                            var zipfullName = Path.Combine(zipfilePath, filename).Replace("\\", "/");
+                            return file.Name == remoteFileName;
+                        }))
+                        {
+                            dleta.Removed.Add(file.Name);
                         }
                     }
 
