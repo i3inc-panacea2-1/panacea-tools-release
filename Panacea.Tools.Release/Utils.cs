@@ -109,21 +109,26 @@ namespace Panacea.Tools.Release
             MessageHelper.OnMessage("Fetching remote info for: " + panacea.Name);
             await panacea.GetRemoteInfoAsync();
             await panacea.InitializeAsync();
-
+            List<Task> allTasks = new List<Task>();
             foreach (var project in _projects.Where(p => p.ProjectType == ProjectType.Module).ToList())
             {
-                try
-                {
-                    MessageHelper.OnMessage("Fetching remote info for: " + project.Name);
-                    await project.GetRemoteInfoAsync();
-                    await project.InitializeAsync();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message);
-                    _projects.Remove(project);
-                }
+                allTasks.Add(Task.Run(async()=>{
+                    try
+                    {
+                        MessageHelper.OnMessage("Fetching remote info for: " + project.Name);
+                        await project.GetRemoteInfoAsync();
+                        await project.InitializeAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                        _projects.Remove(project);
+                    }
+                }));
+                
+
             }
+            await Task.WhenAll(allTasks);
             MessageHelper.OnMessage("Analyzing...");
             var allDependencies = _projects
                 .SelectMany(p => p.Dependencies)

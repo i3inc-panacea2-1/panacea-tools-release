@@ -45,56 +45,29 @@ namespace Panacea.Tools.Release.Models
                 if (_repo.RetrieveStatus().IsDirty) throw new Exception("Dirty repo: " + FullName);
 
 
-                var file = Path.Combine(BasePath, "Properties\\AssemblyInfo.cs");
-                if (File.Exists(file))
+
+                var minimum = new System.Version(2, 50, 0, 0);
+                if (RemoteProject == null || RemoteProject.Version == null)
                 {
-                    var lines = File.ReadLines(file, Encoding.UTF8).ToList();
-                    using (var sw = new StreamReader(file))
+                    SuggestedVersion = minimum;
+                }
+                else
+                {
+                    var v = System.Version.Parse(RemoteProject.Version);
+                    if (v < minimum)
                     {
-                        string version = "0.0.0.0";
-                        var assV = new Regex(@"\[assembly: AssemblyVersion\(\""([^\""]*)\""\)\]");
-                        var assFV = new Regex(@"\[assembly: AssemblyFileVersion\(\""([^\""]*)\""\)\]");
-                        var assIV = new Regex(@"\[assembly: AssemblyInformationalVersion\(\""([^\""]*)\""\)\]");
-                        foreach (var line in lines)
-                        {
-
-                            var m = assV.Match(line);
-                            if (m.Groups.Count == 2 && version == "0.0.0.0")
-                            {
-                                version = m.Groups[1].Value;
-                            }
-
-                            m = assFV.Match(line);
-                            if (m.Groups.Count == 2 && string.IsNullOrEmpty(version))
-                            {
-                                version = m.Groups[1].Value;
-                            }
-
-                            m = assIV.Match(line);
-                            if (m.Groups.Count == 2)
-                            {
-                                version = m.Groups[1].Value;
-                            }
-                        }
-                        if (version == "0.0.0.0")
-                        {
-                            throw new Exception("Version not found: " + Name);
-                        }
-                        version = version.Replace("*", "0");
-                        Version = System.Version.Parse(version);
-                        var minimum = new System.Version(2, 50, 0, 0);
-                        if (Version < minimum)
-                        {
-                            SuggestedVersion = minimum;
-                        }
-                        else
-                        {
-                            SuggestedVersion = new System.Version(Version.Major, Version.Minor, Version.Build, Version.Revision + 1);
-                        }
+                        SuggestedVersion = minimum;
+                    }
+                    else
+                    {
+                        SuggestedVersion = new System.Version(v.Major, v.Minor, v.Build, v.Revision + 1);
                     }
                 }
 
-                CanBeUpdated = HasDifferentHash && Version != null && (ProjectType == ProjectType.Module || Name == "Panacea");
+
+
+
+                CanBeUpdated = HasDifferentHash && (ProjectType == ProjectType.Module || Name == "Panacea");
                 await GetDependenciesAsync();
             });
         }
@@ -143,8 +116,6 @@ namespace Panacea.Tools.Release.Models
                 }
             });
         }
-
-        public System.Version Version { get; private set; }
 
         public System.Version SuggestedVersion
         {
@@ -324,7 +295,7 @@ namespace Panacea.Tools.Release.Models
                     {
                         FromVersion = RemoteProject.Version,
                         ToVersion = SuggestedVersion.ToString(),
-                        Module = Name
+                        Module = Name == "Panacea" ? "core" : Name
                     };
 
                     foreach (var file in Files)
@@ -351,14 +322,19 @@ namespace Panacea.Tools.Release.Models
                         }
                     }
 
-                    if (RemoteProject.Files.Any(rf => !Files.Any(lf => lf.Name == rf.Name)))
+                    foreach (var file in Files)
                     {
-                        RemoteProject.Files.Where(rf => !Files.Any(lf => lf.Name == rf.Name)).ToList().ForEach(nf =>
+                        var filename = Path.GetFileName(file.Name);
+                        var remoteFileName = file.Name.Substring(BuildBasePath.Length + 1, file.Name.Length - BuildBasePath.Length - 1).Replace("\\", "/");
+                        var zipfilePath = Path.Combine("files", file.Name.Substring(BuildBasePath.Length + 1, Path.GetDirectoryName(file.Name).Length - BuildBasePath.Length)).Replace("\\", "/");
+                        var zipfullName = Path.Combine(zipfilePath, filename).Replace("\\", "/");
+                        if (!RemoteProject.Files.Any(lf => lf.Name == remoteFileName))
                         {
-                            dleta.Removed.Add(Path.Combine("files", nf.Name).Replace("\\", "/"));
-                        });
+                            dleta.Removed.Add(zipfullName);
+                        }
                     }
-                    File.WriteAllText(string.Format("{0}/deltas.json", path), JsonSerializer.SerializeToString<Delta>(dleta));
+
+                    File.WriteAllText(string.Format("{0}/deltas.json", path), JsonSerializer.SerializeToString(dleta).IndentJson());
                     zip.AddFile(string.Format("{0}/deltas.json", path), "/");
                 }
 
@@ -386,7 +362,7 @@ namespace Panacea.Tools.Release.Models
                     RedmineVersion = "2.19.6.2"
                 };
 
-                File.WriteAllText(string.Format("{0}/manifest.json", path), JsonSerializer.SerializeToString(vm));
+                File.WriteAllText(string.Format("{0}/manifest.json", path), JsonSerializer.SerializeToString(vm).IndentJson());
 
                 zip.AddFile(string.Format("{0}/manifest.json", path), "/");
                 //zip.CompressionLevel = CompressionLevel.Default;
@@ -416,7 +392,8 @@ namespace Panacea.Tools.Release.Models
                     var dir = new DirectoryInfo(BasePath);
                     var panacea = dir.Parent.Parent.Parent.FullName;
                     var bin = Path.Combine(panacea, "Panacea", "src", "Panacea", "bin", "x86", "Release", "Updater");
-                    Directory.Delete(bin, true);
+                    if (Directory.Exists(bin))
+                        Directory.Delete(bin, true);
                     await Builder.Build(this, bin);
                 }
                 else
@@ -424,7 +401,9 @@ namespace Panacea.Tools.Release.Models
                     var dir = new DirectoryInfo(BasePath);
                     var panacea = dir.Parent.Parent.Parent.FullName;
                     var bin = Path.Combine(panacea, "Panacea", "src", "Panacea", "bin", "x86", "Release", "Applications", Name);
-                    Directory.Delete(bin, true);
+
+                    if (Directory.Exists(bin))
+                        Directory.Delete(bin, true);
                     await Builder.Build(this, bin);
                 }
             }
