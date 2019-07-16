@@ -34,7 +34,39 @@ namespace Panacea.Tools.Release
                 arr.ToArray()
                 );
         }
-        public static Task Build(LocalProject sinfo, string path = null)
+
+        static int RunProcess(string name, string args)
+        {
+            var info = new ProcessStartInfo
+            {
+                Arguments = args,
+                FileName = name,
+
+                //RedirectStandardOutput = true,
+                //RedirectStandardError = true,
+                Verb = "runas"
+            };
+            var process = new Process
+            {
+                StartInfo = info,
+                EnableRaisingEvents = true
+            };
+            try
+            {
+                process.Start();
+                process.WaitForExit();
+                return process.ExitCode;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+            finally
+            {
+
+            }
+        }
+        public static Task Build(LocalProject sinfo, string path = null, string version = null, string fileVersion = null)
         {
             var msBuildPath = Path.Combine(FindMsBuild(), "msbuild.exe");
             FindMsBuild();
@@ -42,43 +74,22 @@ namespace Panacea.Tools.Release
             {
                 if (!File.Exists(sinfo.CsProjPath)) return;
                 MessageHelper.OnMessage(String.Format("Building {0}...", Path.GetFileName(sinfo.CsProjPath)));
-                try
+                RunProcess(
+                    msBuildPath,
+                    "\"" + sinfo.CsProjPath + "\" /t:Clean,Restore /p:Configuration=Release /p:Platform=x86");
+
+                var res = RunProcess(
+                    msBuildPath,
+                    "\"" + sinfo.CsProjPath + "\" /nr:false -fl -flp:logfile=" + GetPath("msbuild.txt") + ";verbosity=normal /t:Rebuild /p:Configuration=Release;Version=" + version + ";FileVersion=" + fileVersion + " /p:Platform=x86 " + (path != null ? "/p:OutputPath=\"" + path + "\"" : ""));
+
+                if (res == 0)
                 {
-                    var info = new ProcessStartInfo
-                    {
-                        Arguments =
-                            "\"" + sinfo.CsProjPath + "\" /nr:false -fl -flp:logfile="+GetPath("msbuild.txt")+";verbosity=normal /t:Restore,Rebuild /p:Configuration=Release /p:Platform=x86 " + (path != null ? "/p:OutputPath=\"" + path + "\"" : ""),
-                        FileName = msBuildPath,
-
-                        //RedirectStandardOutput = true,
-                        //RedirectStandardError = true,
-                        Verb = "runas"
-                    };
-                    var process = new Process
-                    {
-                        StartInfo = info,
-                        EnableRaisingEvents = true
-                    };
-
-                    process.Start();
-                    //process.BeginOutputReadLine();
-                    process.WaitForExit();
-                   
-                    if (process.ExitCode == 0)
-                    {
-                        MessageHelper.OnMessage("Build was successful!");
-                    }
-                    else
-                    {
-                        throw new Exception("Build failed!");
-                    }
-                    process.Dispose();
+                    MessageHelper.OnMessage("Build was successful!");
                 }
-                catch (Exception ex)
+                else
                 {
-                    throw;
+                    throw new Exception("Build failed!");
                 }
-
             });
         }
     }

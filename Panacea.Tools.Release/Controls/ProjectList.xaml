@@ -10,13 +10,7 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
     <UserControl.Resources>
-        <Style TargetType="CheckBox" BasedOn="{StaticResource {x:Type CheckBox}}">
-            <Style.Triggers>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Opacity" Value="0.1"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+        
     </UserControl.Resources>
     <Grid Background="SeaShell">
         <Grid.RowDefinitions>
@@ -146,23 +140,14 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Width="auto" Header="Requires Update">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <CheckBox
-                                        HorizontalAlignment="Center"
-                                        IsChecked="{Binding RequiresUpdate, Mode=OneWay}"
-                                        IsEnabled="False" />
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
+                        <!--IsEnabled="{Binding CanBeUpdated, Mode=OneWay}"-->
                         <GridViewColumn Width="auto" Header="Update?">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <CheckBox
                                         HorizontalAlignment="Center"
                                         IsChecked="{Binding Update}"
-                                        IsEnabled="{Binding CanBeUpdated, Mode=OneWay}" />
+                                         />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

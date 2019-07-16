@@ -67,13 +67,13 @@ namespace Panacea.Tools.Release
             win.Progress.Maximum = selected.Count();
             win.Progress.IsIndeterminate = false;
             var panacea = Applications.First(a => a.Name == "Panacea");
-            if(panacea.Update)
+            if (panacea.Update)
             {
                 win.Progress.Maximum++;
                 win.StatusText.Text = "Building applications...";
                 foreach (var app in Applications)
                 {
-                    await app.Build();
+                    await app.Build(panacea.SuggestedVersion.ToString(), panacea.SuggestedVersion.ToString() + "-g" + app.CommitHash.Substring(0,7));
                 }
                 win.StatusText.Text = "Building core zip...";
                 await panacea.BuildDeltaZip(path);
@@ -86,11 +86,11 @@ namespace Panacea.Tools.Release
                 }
 
             }
-            
+
             foreach (var module in selected)
             {
-                
-                win.StatusText.Text = "Building " + module.Name+ "...";
+
+                win.StatusText.Text = "Building " + module.Name + "...";
                 await module.Build();
                 win.StatusText.Text = "Building " + module.Name + " zip...";
                 await module.BuildDeltaZip(path);
@@ -104,7 +104,7 @@ namespace Panacea.Tools.Release
                 }
             }
             win.Close();
-            
+
         }
         private async void ButtonReport_Click(object sender, RoutedEventArgs e)
         {
@@ -129,15 +129,15 @@ namespace Panacea.Tools.Release
                 MessageBox.Show(ex.Message);
             }
         }
-       
+
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-           
+
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-           
+
         }
 
         private void Hyperlink_Click(object sender, RoutedEventArgs e)
@@ -155,12 +155,12 @@ namespace Panacea.Tools.Release
 
         private void Button_Click_4(object sender, RoutedEventArgs e)
         {
-          
+
         }
 
         private void Button_Click_5(object sender, RoutedEventArgs e)
         {
-           
+
         }
 
 

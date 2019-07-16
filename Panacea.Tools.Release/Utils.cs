@@ -110,7 +110,7 @@ namespace Panacea.Tools.Release
             await panacea.GetRemoteInfoAsync();
             await panacea.InitializeAsync();
             List<Task> allTasks = new List<Task>();
-            foreach (var project in _projects.Where(p => p.ProjectType == ProjectType.Module).ToList())
+            foreach (var project in _projects.ToList())
             {
                 allTasks.Add(Task.Run(async()=>{
                     try

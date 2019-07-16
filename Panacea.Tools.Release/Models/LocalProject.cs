@@ -324,7 +324,7 @@ namespace Panacea.Tools.Release.Models
 
                     foreach (var file in RemoteProject.Files)
                     {
-                       
+
                         if (!Files.Any(lf =>
                         {
                             var filename = Path.GetFileName(lf.Name);
@@ -334,7 +334,7 @@ namespace Panacea.Tools.Release.Models
                             return file.Name == remoteFileName;
                         }))
                         {
-                            dleta.Removed.Add(file.Name);
+                            dleta.Removed.Add("files/" + file.Name);
                         }
                     }
 
@@ -380,16 +380,16 @@ namespace Panacea.Tools.Release.Models
             });
         }
 
-        public async Task Build()
+        public async Task Build(string version = null, string fileVersion = null)
         {
             if (ProjectType == ProjectType.Module)
-                await Builder.Build(this);
+                await Builder.Build(this, null, SuggestedVersion.ToString(), SuggestedVersion.ToString() + "-g" + CommitHash.Substring(0,7));
             else
             {
                 // patch to match Core from previous release flow
                 if (Name == "Panacea")
                 {
-                    await Builder.Build(this);
+                    await Builder.Build(this, null, SuggestedVersion.ToString(), SuggestedVersion.ToString() + "-g" + CommitHash.Substring(0, 7));
                 }
                 else if (Name == "IBT.Updater")
                 {
@@ -398,7 +398,7 @@ namespace Panacea.Tools.Release.Models
                     var bin = Path.Combine(panacea, "Panacea", "src", "Panacea", "bin", "x86", "Release", "Updater");
                     if (Directory.Exists(bin))
                         Directory.Delete(bin, true);
-                    await Builder.Build(this, bin);
+                    await Builder.Build(this, bin, version, fileVersion);
                 }
                 else
                 {
@@ -408,7 +408,7 @@ namespace Panacea.Tools.Release.Models
 
                     if (Directory.Exists(bin))
                         Directory.Delete(bin, true);
-                    await Builder.Build(this, bin);
+                    await Builder.Build(this, bin, version, fileVersion);
                 }
             }
         }
