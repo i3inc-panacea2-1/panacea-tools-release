@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace Panacea.Tools.Release.Models
 {
-    public class LocalProject:INotifyPropertyChanged
+    public class LocalProject : INotifyPropertyChanged
     {
         Repository _repo;
 
@@ -74,8 +74,24 @@ namespace Panacea.Tools.Release.Models
                 Translations = await TranslatorParser.GetTranslations(Name, Path.GetDirectoryName(CsProjPath));
 
                 CanBeUpdated = (ProjectType == ProjectType.Module || Name == "Panacea")
-                && (HasDifferentHash || !Translations.SequenceEqual(RemoteProject.Translations));
+                && (HasDifferentHash || HasDifferentTranslations);
             });
+        }
+
+        public bool HasDifferentTranslations
+        {
+            get
+            {
+                foreach (var trans in Translations)
+                {
+                    if (!RemoteProject.Translations.Contains(trans)) return true;
+                }
+                foreach (var trans in RemoteProject.Translations)
+                {
+                    if (!Translations.Contains(trans)) return true;
+                }
+                return false;
+            }
         }
 
         public List<string> Translations { get; set; }
@@ -95,7 +111,10 @@ namespace Panacea.Tools.Release.Models
 
         public async Task GetRemoteInfoAsync()
         {
-            using (var client = new WebClient())
+            using (var client = new WebClient()
+            {
+                Encoding = Encoding.UTF8
+            })
             {
                 try
                 {
