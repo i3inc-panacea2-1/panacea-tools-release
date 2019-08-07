@@ -9,9 +9,7 @@
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
-    <UserControl.Resources>
-        
-    </UserControl.Resources>
+    <UserControl.Resources />
     <Grid Background="SeaShell">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -21,14 +19,27 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal">
-            <Button Margin="1" Content="Update all that require it" />
+            <Button
+                Name="UpdateDirty"
+                Margin="1"
+                Click="UpdateDirty_Click"
+                Content="Update all dirty" />
+            <Button
+                Name="UpdateAll"
+                Margin="1"
+                Click="UpdateAll_Click"
+                Content="Update all" />
 
-            <Button Margin="1" Content="Update none" />
+            <Button
+                Name="UpdateNone"
+                Margin="1"
+                Click="UpdateNone_Click"
+                Content="Update none" />
         </StackPanel>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*" />
-                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
             <ListView
                 Name="List"
@@ -50,17 +61,8 @@
                             Width="auto"
                             DisplayMemberBinding="{Binding Name}"
                             Header="Name" />
-                        <GridViewColumn Width="auto" Header="Local">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock
-                                        IsEnabled="False"
-                                        Text="{Binding Version}"
-                                        TextAlignment="Center" />
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                        <GridViewColumn Width="auto" Header="Remote">
+
+                        <GridViewColumn Width="auto" Header="Remote Version">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <TextBlock
@@ -70,7 +72,7 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Width="auto" Header="Project Hash">
+                        <GridViewColumn Width="auto" Header="Different Commit">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <CheckBox
@@ -80,6 +82,7 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
+                       
                         <GridViewColumn Width="auto" Header="Bugs">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
@@ -140,14 +143,19 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <!--IsEnabled="{Binding CanBeUpdated, Mode=OneWay}"-->
+                        <!--  IsEnabled="{Binding CanBeUpdated, Mode=OneWay}"  -->
+                        <GridViewColumn Width="auto" Header="Dirty">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox HorizontalAlignment="Center" IsEnabled="False" IsChecked="{Binding CanBeUpdated, Mode=OneWay}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
                         <GridViewColumn Width="auto" Header="Update?">
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <CheckBox
-                                        HorizontalAlignment="Center"
-                                        IsChecked="{Binding Update}"
-                                         />
+                                    <CheckBox HorizontalAlignment="Center" IsChecked="{Binding Update, Mode=TwoWay}" />
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -155,35 +163,51 @@
                 </ListView.View>
             </ListView>
 
-            <Grid Grid.Column="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition />
-                    <RowDefinition Height="auto" />
-                    <RowDefinition Height="auto" />
-                    <RowDefinition Height="auto" />
-                    
-                    <RowDefinition Height="auto" />
-                </Grid.RowDefinitions>
-                <GroupBox Grid.Row="0" Header="Signatures">
-                    <ListView
-                        Background="White"
-                        ItemsSource="{Binding ElementName=List, Path=SelectedItem.Dependencies, Mode=OneWay}"
-                        ScrollViewer.CanContentScroll="True">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn
-                                    Width="auto"
-                                    DisplayMemberBinding="{Binding Name}"
-                                    Header="Name" />
-                                <GridViewColumn
-                                    Width="auto"
-                                    DisplayMemberBinding="{Binding Version}"
-                                    Header="Version" />
-                            </GridView>
-                        </ListView.View>
-                    </ListView>
-                </GroupBox>
-                <GroupBox Grid.Row="1" Header="Bugs">
+            <TabControl Grid.Column="1">
+
+                <TabItem Header="Translations">
+                    <ItemsControl ItemsSource="{Binding ElementName=List, Path=SelectedItem.Translations, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </TabItem>
+                <TabItem Header="Signatures">
+                    <ItemsControl ItemsSource="{Binding ElementName=List, Path=SelectedItem.BugsInfo, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+
+                                    <Expander Header="{Binding Subject}">
+                                        <StackPanel Background="White">
+                                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" />
+                                            <TextBlock>
+                                                <TextBlock.Inlines>
+                                                    <Hyperlink Tag="{Binding Id}">
+                                                        <TextBlock Text="Visit" />
+                                                    </Hyperlink>
+                                                </TextBlock.Inlines>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Expander>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </TabItem>
+                <TabItem Header="Bugs">
                     <ItemsControl ItemsSource="{Binding ElementName=List, Path=SelectedItem.BugsInfo, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -211,8 +235,8 @@
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
 
-                </GroupBox>
-                <GroupBox Grid.Row="2" Header="Features">
+                </TabItem>
+                <TabItem Header="Features">
                     <ItemsControl ItemsSource="{Binding ElementName=List, Path=SelectedItem.FeaturesInfo, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -239,9 +263,9 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
-                </GroupBox>
+                </TabItem>
 
-                <GroupBox Grid.Row="3" Header="Refactoring">
+                <TabItem Header="Refactoring">
                     <ItemsControl ItemsSource="{Binding ElementName=List, Path=SelectedItem.Refactors, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -268,9 +292,9 @@
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                     </ItemsControl>
-                </GroupBox>
-                
-            </Grid>
+                </TabItem>
+
+            </TabControl>
 
         </Grid>
 

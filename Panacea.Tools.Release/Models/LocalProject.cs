@@ -5,11 +5,13 @@ using Panacea.Tools.Release.Helpers;
 using ServiceStack.Text;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -17,7 +19,7 @@ using System.Threading.Tasks;
 
 namespace Panacea.Tools.Release.Models
 {
-    public class LocalProject
+    public class LocalProject:INotifyPropertyChanged
     {
         Repository _repo;
 
@@ -67,14 +69,29 @@ namespace Panacea.Tools.Release.Models
 
 
 
-                CanBeUpdated = HasDifferentHash && (ProjectType == ProjectType.Module || Name == "Panacea");
                 await GetDependenciesAsync();
+
+                Translations = await TranslatorParser.GetTranslations(Name, Path.GetDirectoryName(CsProjPath));
+
+                CanBeUpdated = (ProjectType == ProjectType.Module || Name == "Panacea")
+                && (HasDifferentHash || !Translations.SequenceEqual(RemoteProject.Translations));
             });
         }
 
+        public List<string> Translations { get; set; }
+
         public bool CanBeUpdated { get; private set; }
 
-        public bool Update { get; set; }
+        bool _update;
+        public bool Update
+        {
+            get => _update;
+            set
+            {
+                _update = value;
+                OnPropertyChanged();
+            }
+        }
 
         public async Task GetRemoteInfoAsync()
         {
@@ -156,6 +173,9 @@ namespace Panacea.Tools.Release.Models
         }
 
         ProjectType _type = ProjectType.Unknown;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public ProjectType ProjectType
         {
             get
@@ -349,7 +369,7 @@ namespace Panacea.Tools.Release.Models
                     Author = "Dotbydot",
                     ReleaseDate = DateTime.Now.ToString("yyyy-MM-dd"),
                     Version = SuggestedVersion.ToString(),
-                    Translations = new List<string>(),
+                    Translations = Translations,
                     Files = Files.Select(file =>
                     {
                         var filename = Path.GetFileName(file.Name);
@@ -363,7 +383,7 @@ namespace Panacea.Tools.Release.Models
                         };
                     }).ToList(),
                     Dependencies = Dependencies.Select(d => d.Name + "-" + d.Version).ToList(),
-                    RedmineVersion = "2.19.6.2"
+                    RedmineVersion = "2.19.8.1"
                 };
 
                 File.WriteAllText(string.Format("{0}/manifest.json", path), JsonSerializer.SerializeToString(vm).IndentJson());
@@ -383,7 +403,7 @@ namespace Panacea.Tools.Release.Models
         public async Task Build(string version = null, string fileVersion = null)
         {
             if (ProjectType == ProjectType.Module)
-                await Builder.Build(this, null, SuggestedVersion.ToString(), SuggestedVersion.ToString() + "-g" + CommitHash.Substring(0,7));
+                await Builder.Build(this, null, SuggestedVersion.ToString(), SuggestedVersion.ToString() + "-g" + CommitHash.Substring(0, 7));
             else
             {
                 // patch to match Core from previous release flow
@@ -413,6 +433,10 @@ namespace Panacea.Tools.Release.Models
             }
         }
 
+        protected void OnPropertyChanged([CallerMemberName] string name = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
     }
 
     public class Dependency

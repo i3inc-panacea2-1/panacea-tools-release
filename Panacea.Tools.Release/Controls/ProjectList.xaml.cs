@@ -38,5 +38,29 @@ namespace Panacea.Tools.Release.Controls
         {
             InitializeComponent();
         }
+
+        private void UpdateAll_Click(object sender, RoutedEventArgs e)
+        {
+            foreach(var mod in Projects)
+            {
+                mod.Update = true;
+            }
+        }
+
+        private void UpdateDirty_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var mod in Projects)
+            {
+                mod.Update = mod.CanBeUpdated;
+            }
+        }
+
+        private void UpdateNone_Click(object sender, RoutedEventArgs e)
+        {
+            foreach (var mod in Projects)
+            {
+                mod.Update = false;
+            }
+        }
     }
 }

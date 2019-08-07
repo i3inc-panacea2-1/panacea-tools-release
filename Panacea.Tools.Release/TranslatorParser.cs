@@ -15,27 +15,28 @@ namespace Panacea.Tools.Release
 {
     internal class TranslatorParser
     {
-        public static Task<Dictionary<string, List<string>>> GetTranslations(string path)
+        public static Task<List<string>> GetTranslations(string pluginName, string path)
         {
             return Task.Run(() =>
             {
                 var info = new DirectoryInfo(path);
-                var translations = new Dictionary<string, List<string>>();
+                var translations = new List<string>();
                 MessageHelper.OnMessage("Parsing Xaml files for translations");
-                ParseXamlFiles(info, ref translations);
+                translations = translations.Concat(ParseXamlFiles(pluginName, info)).ToList();
                 MessageHelper.OnMessage("Parsing Guide files for translations");
-                ParseGuideFiles(info, ref translations);
+                translations = translations.Concat(ParseGuideFiles(pluginName, info)).ToList();
                 MessageHelper.OnMessage("Parsing C# files for translations");
-                ParseCSharpFiles(info, ref translations);
-                return translations;
+                translations = translations.Concat(ParseCSharpFiles(pluginName, info)).ToList();
+                return translations.GroupBy(t => t).Select(g => g.Key).ToList();
             });
         }
 
-        private static void ParseXamlFiles(DirectoryInfo info, ref Dictionary<string, List<string>> translations)
+        private static IEnumerable<string> ParseXamlFiles(string pluginName, DirectoryInfo info)
         {
-            foreach (var xaml in from file in Directory.GetFiles(info.FullName, "*.xaml", SearchOption.AllDirectories) 
-                                 select File.ReadAllText(file) into xaml let doc = XDocument.Parse(xaml) select xaml)
+            var xamlFiles = Directory.GetFiles(info.FullName, "*.xaml", SearchOption.AllDirectories);
+            foreach (var file in xamlFiles)
             {
+                var xaml = File.ReadAllText(file);
                 using (var reader = XmlReader.Create(new StringReader(xaml)))
                 {
                     while (reader.Read())
@@ -48,24 +49,20 @@ namespace Panacea.Tools.Release
                             var regex = new Regex(@"'([^']+)'");
                             var match = regex.Matches(reader.Value);
                             if (match.Count != 2) continue;
-                           
-                            var plugin = match[1].Groups[1].Value;
-                            var text = match[0].Groups[1].Value;
-                            if (!translations.ContainsKey(plugin) || translations[plugin] == null)
-                            {
-                                translations[plugin] = new List<string>();
-                            }
 
-                            if (String.IsNullOrEmpty(text)) continue;
-                            if (!translations[plugin].Contains(text))
-                                translations[plugin].Add(text);
+                            var plugin = match[1].Groups[1].Value;
+                            if (plugin != pluginName) throw new Exception("Invalid translation for " + pluginName + " at " + file);
+                            var text = match[0].Groups[1].Value;
+
+                            if (string.IsNullOrEmpty(text)) continue;
+                            yield return text;
                         }
                     }
                 }
             }
         }
 
-        private static void ParseGuideFiles(DirectoryInfo info, ref Dictionary<string, List<string>> translations)
+        private static IEnumerable<string> ParseGuideFiles(string pluginName, DirectoryInfo info)
         {
             foreach (
                 var file in
@@ -75,18 +72,14 @@ namespace Panacea.Tools.Release
                 var obj = JsonSerializer.DeserializeFromString<Guide>(json);
                 foreach (var action in obj.Actions.Where(action => !string.IsNullOrEmpty(action.Text)))
                 {
-                    if (!translations.ContainsKey(obj.Plugin) || translations[obj.Plugin] == null)
-                    {
-                        translations[obj.Plugin] = new List<string>();
-                    }
-                    if (String.IsNullOrEmpty(action.Text)) continue;
-                    if (!translations[obj.Plugin].Contains(action.Text))
-                        translations[obj.Plugin].Add(action.Text);
+
+                    if (string.IsNullOrEmpty(action.Text)) continue;
+                    yield return action.Text;
                 }
             }
         }
 
-        private static void ParseCSharpFiles(DirectoryInfo info, ref Dictionary<string, List<string>> translations)
+        private static IEnumerable<string> ParseCSharpFiles(string pluginName, DirectoryInfo info)
         {
             foreach (
                 var file in
@@ -101,7 +94,7 @@ namespace Panacea.Tools.Release
 
                 foreach (Match mm in match)
                 {
-                    var nameOfTranslator =mm.Groups[4].Value;
+                    var nameOfTranslator = mm.Groups[4].Value;
                     var plugin = mm.Groups[10].Value;
 
                     var regex1 = new Regex(nameOfTranslator + @"([\s\r\n]*)\.([\s\r\n]*)Translate([\s\r\n]*)\(([\s\r\n]*)\""([^\""""]+)\""([\s\r\n]*)\)");
@@ -112,20 +105,16 @@ namespace Panacea.Tools.Release
                     }
                     foreach (var text in from object m in match1 select match1[0].Groups[5].Value)
                     {
-                        if(string.IsNullOrEmpty(text))continue;
-                        if (!translations.ContainsKey(plugin) || translations[plugin] == null)
-                        {
-                            translations[plugin] = new List<string>();
-                        }
-                        if (!translations[plugin].Contains(text))
-                            translations[plugin].Add(text);
+                        if (string.IsNullOrEmpty(text)) continue;
+                        if (pluginName != plugin) throw new Exception("Invalid translation for " + pluginName + " at " + file);
+                        yield return text;
                     }
                 }
-                
+
 
                 // example code
                 // new Tranlator("core").Translate("asdf");
-               
+
                 regex = new Regex(@"new([\s\r\n]+)Translator([\s\r\n]*)\(([\s\r\n]*)\""([^\""""]+)\""([\s\r\n]*)\)([\s\r\n]*)\.([\s\r\n]*)Translate([\s\r\n]*)\(([\s\r\n]*)\""([^\""""]+)\""([\s\r\n]*)\)");
                 match = regex.Matches(code);
 
@@ -134,12 +123,8 @@ namespace Panacea.Tools.Release
                     var plugin = m.Groups[4].Value;
                     var text = m.Groups[10].Value;
                     if (string.IsNullOrEmpty(text)) continue;
-                    if (!translations.ContainsKey(plugin) || translations[plugin] == null)
-                    {
-                        translations[plugin] = new List<string>();
-                    }
-                    if (!translations[plugin].Contains(text))
-                        translations[plugin].Add(text);
+                    if (pluginName != plugin) throw new Exception("Invalid translation for " + pluginName + " at " + file);
+                    yield return text;
 
                 }
             }
