@@ -82,6 +82,7 @@ namespace Panacea.Tools.Release.Models
         {
             get
             {
+                if (RemoteProject == null || RemoteProject.Translations == null) return true;
                 foreach (var trans in Translations)
                 {
                     if (!RemoteProject.Translations.Contains(trans)) return true;
