@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Panacea.Tools.Release
@@ -18,7 +19,7 @@ namespace Panacea.Tools.Release
         {
             var instances = MSBuildLocator.QueryVisualStudioInstances(VisualStudioInstanceQueryOptions.Default);
             ////if(instances.Any(i=>i.Version))
-            return instances.OrderByDescending(d=>d.Version).First().MSBuildPath;
+            return instances.OrderBy(d=>d.Version).First().MSBuildPath;
         }
 
         const string pathToMsBuild = @"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\MSBuild\15.0\Bin\MsBuild.exe";
@@ -37,6 +38,7 @@ namespace Panacea.Tools.Release
 
         static int RunProcess(string name, string args)
         {
+            Debug.WriteLine(name + " " + args);
             var info = new ProcessStartInfo
             {
                 Arguments = args,
@@ -46,24 +48,25 @@ namespace Panacea.Tools.Release
                 //RedirectStandardError = true,
                 Verb = "runas"
             };
-            var process = new Process
+            using(var process = new Process
             {
                 StartInfo = info,
-                EnableRaisingEvents = true
-            };
-            try
-            {
-                process.Start();
-                process.WaitForExit();
-                return process.ExitCode;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            finally
-            {
-
+                EnableRaisingEvents = false
+            }){
+                try
+                {
+                    process.Start();
+                    process.WaitForExit();
+                    return process.ExitCode;
+                }
+                catch (Exception)
+                {
+                    throw;
+                }
+                finally
+                {
+                    Thread.Sleep(1000);
+                }
             }
         }
         public static Task Build(LocalProject sinfo, string path = null, string version = null, string fileVersion = null)
@@ -74,13 +77,13 @@ namespace Panacea.Tools.Release
             {
                 if (!File.Exists(sinfo.CsProjPath)) return;
                 MessageHelper.OnMessage(String.Format("Building {0}...", Path.GetFileName(sinfo.CsProjPath)));
-                RunProcess(
-                    msBuildPath,
-                    "\"" + sinfo.CsProjPath + "\" /nr:false -fl -flp:logfile=" + GetPath("msbuild1.txt") + ";verbosity=normal  /t:Clean,Restore /p:Configuration=Release /p:Platform=x86");
+               // RunProcess(
+               //     msBuildPath,
+               //     "\"" + sinfo.CsProjPath + "\" /nr:false -fl -flp:logfile=" + GetPath("msbuild1.txt") + ";verbosity=normal  /t:Clean,Restore /p:Configuration=Release /p:Platform=x86");
 
                 var res = RunProcess(
                     msBuildPath,
-                    "\"" + sinfo.CsProjPath + "\" /nr:false -fl -flp:logfile=" + GetPath("msbuild2.txt") + ";verbosity=normal /t:Restore,Rebuild /p:Configuration=Release;Version=" + version + ";FileVersion=" + fileVersion + " /p:Platform=x86 " + (path != null ? "/p:OutputPath=\"" + path + "\"" : ""));
+                    "\"" + sinfo.CsProjPath + "\" /nr:false -fl -flp:logfile=" + GetPath("msbuild2.txt") + ";verbosity=normal /t:Clean,Restore,Rebuild /p:Configuration=Release;Version=" + version + ";FileVersion=" + fileVersion + " /p:Platform=x86 " + (path != null ? "/p:OutputPath=\"" + path + "\"" : ""));
 
                 if (res == 0)
                 {
