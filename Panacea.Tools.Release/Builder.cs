@@ -46,7 +46,7 @@ namespace Panacea.Tools.Release
 
                 //RedirectStandardOutput = true,
                 //RedirectStandardError = true,
-                Verb = "runas"
+                //Verb = "runas"
             };
             using(var process = new Process
             {
@@ -77,10 +77,7 @@ namespace Panacea.Tools.Release
             {
                 if (!File.Exists(sinfo.CsProjPath)) return;
                 MessageHelper.OnMessage(String.Format("Building {0}...", Path.GetFileName(sinfo.CsProjPath)));
-               // RunProcess(
-               //     msBuildPath,
-               //     "\"" + sinfo.CsProjPath + "\" /nr:false -fl -flp:logfile=" + GetPath("msbuild1.txt") + ";verbosity=normal  /t:Clean,Restore /p:Configuration=Release /p:Platform=x86");
-
+               
                 var res = RunProcess(
                     msBuildPath,
                     "\"" + sinfo.CsProjPath + "\" /restore /nr:false -fl -flp:logfile=" + GetPath("msbuild2.txt") + ";verbosity=normal /t:Rebuild /p:Configuration=Release;Version=" + version + ";FileVersion=" + fileVersion + " /p:Platform=x86 " + (path != null ? "/p:OutputPath=\"" + path + "\"" : ""));
